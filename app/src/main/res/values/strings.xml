@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">BemEstarInteligente</string>
+    <string name="privacy_title">Política de Privacidade</string>
+    <string name="privacy_description">Este aplicativo coleta dados de saúde, como frequência cardíaca, passos, sono, estresse e outros, para oferecer recomendações personalizadas de bem-estar. Esses dados não são compartilhados com terceiros e são usados apenas para melhorar sua experiência com o app.</string>
+    <string name="privacy_note">Você pode revogar as permissões a qualquer momento acessando as configurações do Health Connect no seu dispositivo.</string>
+</resources>
