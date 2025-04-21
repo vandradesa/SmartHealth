@@ -5,6 +5,7 @@ import androidx.lifecycle.*
 import com.example.bemestarinteligenteapp.repository.HealthDataRepository
 import kotlinx.coroutines.launch
 import java.time.Instant
+import java.time.ZoneId
 
 class MainViewModel(
     private val healthDataRepository: HealthDataRepository
@@ -21,7 +22,11 @@ class MainViewModel(
     fun readSteps(healthConnectClient: HealthConnectClient) {
         viewModelScope.launch {
             val endTime = Instant.now()
-            val startTime = endTime.minusSeconds(24 * 60 * 60)
+            val startTime = endTime
+                .atZone(ZoneId.systemDefault())        // converte para horário local
+                .toLocalDate()                         // pega a data de hoje
+                .atStartOfDay(ZoneId.systemDefault())  // define o início do dia na zona local
+                .toInstant()                           // converte de volta para Instant
             val total = healthDataRepository.getStepsData(healthConnectClient, startTime, endTime)
             _steps.value = total
         }
