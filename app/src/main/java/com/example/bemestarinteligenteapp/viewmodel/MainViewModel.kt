@@ -27,7 +27,7 @@ class MainViewModel(
                 .toLocalDate()                         // pega a data de hoje
                 .atStartOfDay(ZoneId.systemDefault())  // define o início do dia na zona local
                 .toInstant()                           // converte de volta para Instant
-            val total = healthDataRepository.getStepsData(healthConnectClient, startTime, endTime)
+            val total = healthDataRepository.getStepsData(startTime, endTime)
             _steps.value = total
         }
     }

@@ -25,6 +25,8 @@ import com.example.bemestarinteligenteapp.repository.HealthDataRepositoryImpl
 import com.example.bemestarinteligenteapp.ui.theme.BemEstarInteligenteAppTheme
 import com.example.bemestarinteligenteapp.viewmodel.MainViewModel
 import com.example.bemestarinteligenteapp.viewmodel.MainViewModelFactory
+import com.example.bemestarinteligenteapp.viewmodel.StepsViewModel
+import com.example.bemestarinteligenteapp.viewmodel.StepsViewModelFactory
 import kotlinx.coroutines.launch
 
 private val permissions = setOf(
@@ -38,7 +40,7 @@ private val permissions = setOf(
 
 class MainActivity : ComponentActivity() {
 
-    private lateinit var viewModel: MainViewModel
+    private lateinit var stepsViewModel: StepsViewModel
     private lateinit var healthConnectClient: HealthConnectClient
 
 
@@ -48,7 +50,7 @@ class MainActivity : ComponentActivity() {
         if (granted.containsAll(permissions)) {
             lifecycleScope.launch {
                 healthConnectClient = HealthConnectClient.getOrCreate(this@MainActivity)
-                viewModel.readSteps(healthConnectClient)
+                stepsViewModel.loadSteps(healthConnectClient)
             }
         } else {
             Toast.makeText(
@@ -63,9 +65,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         // Instanciando ViewModel com o repositório
-        val repository = HealthDataRepositoryImpl()
-        val factory = MainViewModelFactory(repository)
-        viewModel = ViewModelProvider(this, factory)[MainViewModel::class.java]
+        //val repository = HealthDataRepositoryImpl()
+        val stepsFactory = StepsViewModelFactory(applicationContext)
+        stepsViewModel = ViewModelProvider(this, stepsFactory)[StepsViewModel::class.java]
 
         lifecycleScope.launch {
             val providerPackageName = "com.google.android.apps.healthdata"
@@ -86,7 +88,7 @@ class MainActivity : ComponentActivity() {
 
             val granted = permissionController.getGrantedPermissions()
             if (granted.containsAll(permissions)) {
-                viewModel.readSteps(healthConnectClient)
+                stepsViewModel.loadSteps(healthConnectClient)
             } else {
                 requestPermissions.launch(permissions)
             }
@@ -99,7 +101,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    DashboardScreen(viewModel = viewModel)
+                    //DashboardScreen(viewModel = stepsViewModel)
+                    StepsScreen(healthConnectClient = healthConnectClient)  // Passando explicitamente o healthConnectClient
+
+
 
                 }
             }

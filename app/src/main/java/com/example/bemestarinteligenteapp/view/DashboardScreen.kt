@@ -20,6 +20,7 @@ import androidx.health.connect.client.HealthConnectClient
 import com.example.bemestarinteligenteapp.ui.theme.BemEstarInteligenteAppTheme
 import com.example.bemestarinteligenteapp.view.StepSummaryCard
 import com.example.bemestarinteligenteapp.viewmodel.MainViewModel
+import com.example.bemestarinteligenteapp.viewmodel.StepsViewModel
 
 @Composable
 fun DashboardScreenContent(steps:Long?) {
@@ -61,7 +62,7 @@ fun DashboardScreenContentPreview() {
 }
 
 @Composable
-fun DashboardScreen(viewModel: MainViewModel) {
-    val steps by viewModel.steps.observeAsState()
-    DashboardScreenContent(steps = steps)
+fun DashboardScreen(viewModel: StepsViewModel) {
+    val stepsData by viewModel.stepsData.observeAsState()
+    DashboardScreenContent(steps = stepsData?.count)
 }
