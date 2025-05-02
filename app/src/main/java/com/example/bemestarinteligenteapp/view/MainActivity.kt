@@ -5,15 +5,9 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.livedata.observeAsState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.health.connect.client.HealthConnectClient
@@ -21,12 +15,11 @@ import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.*
 import androidx.core.net.toUri
-import com.example.bemestarinteligenteapp.repository.HealthDataRepositoryImpl
 import com.example.bemestarinteligenteapp.ui.theme.BemEstarInteligenteAppTheme
-import com.example.bemestarinteligenteapp.viewmodel.MainViewModel
-import com.example.bemestarinteligenteapp.viewmodel.MainViewModelFactory
-import com.example.bemestarinteligenteapp.viewmodel.StepsViewModel
-import com.example.bemestarinteligenteapp.viewmodel.StepsViewModelFactory
+import com.example.bemestarinteligenteapp.viewmodel.heartRate.HeartRateViewModel
+import com.example.bemestarinteligenteapp.viewmodel.heartRate.HeartRateViewModelFactory
+import com.example.bemestarinteligenteapp.viewmodel.steps.StepsViewModel
+import com.example.bemestarinteligenteapp.viewmodel.steps.StepsViewModelFactory
 import kotlinx.coroutines.launch
 
 private val permissions = setOf(
@@ -41,6 +34,7 @@ private val permissions = setOf(
 class MainActivity : ComponentActivity() {
 
     private lateinit var stepsViewModel: StepsViewModel
+    private lateinit var heartRateViewModel: HeartRateViewModel
     private lateinit var healthConnectClient: HealthConnectClient
 
 
@@ -51,6 +45,7 @@ class MainActivity : ComponentActivity() {
             lifecycleScope.launch {
                 healthConnectClient = HealthConnectClient.getOrCreate(this@MainActivity)
                 stepsViewModel.loadSteps(healthConnectClient)
+                heartRateViewModel.loadHeartRate(healthConnectClient)
             }
         } else {
             Toast.makeText(
@@ -66,8 +61,13 @@ class MainActivity : ComponentActivity() {
 
         // Instanciando ViewModel com o repositório
         //val repository = HealthDataRepositoryImpl()
+        //steps
         val stepsFactory = StepsViewModelFactory(applicationContext)
         stepsViewModel = ViewModelProvider(this, stepsFactory)[StepsViewModel::class.java]
+
+        //heartRate
+        val heartRateFactory = HeartRateViewModelFactory(applicationContext)
+        heartRateViewModel = ViewModelProvider(this, heartRateFactory)[HeartRateViewModel::class.java]
 
         lifecycleScope.launch {
             val providerPackageName = "com.google.android.apps.healthdata"
@@ -87,8 +87,10 @@ class MainActivity : ComponentActivity() {
             val permissionController = healthConnectClient.permissionController
 
             val granted = permissionController.getGrantedPermissions()
+
             if (granted.containsAll(permissions)) {
                 stepsViewModel.loadSteps(healthConnectClient)
+                heartRateViewModel.loadHeartRate(healthConnectClient)
             } else {
                 requestPermissions.launch(permissions)
             }
@@ -101,8 +103,10 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    //DashboardScreen(viewModel = stepsViewModel)
-                    StepsScreen(healthConnectClient = healthConnectClient)  // Passando explicitamente o healthConnectClient
+                    DashboardScreen(
+                        stepsViewModel    = stepsViewModel,
+                        heartRateViewModel = heartRateViewModel)
+                    //StepsScreen(healthConnectClient = healthConnectClient)  // Passando explicitamente o healthConnectClient
 
 
 

@@ -1,11 +1,11 @@
-package com.example.bemestarinteligenteapp.viewmodel
+package com.example.bemestarinteligenteapp.viewmodel.steps
 
 import androidx.health.connect.client.HealthConnectClient
 import androidx.lifecycle.*
 import com.example.bemestarinteligenteapp.model.StepsData
 import com.example.bemestarinteligenteapp.repository.HealthDataRepository
 import kotlinx.coroutines.launch
-import java.time.Instant
+import java.time.LocalDate
 import java.time.ZoneId
 
 class StepsViewModel(
@@ -16,12 +16,12 @@ class StepsViewModel(
     val stepsData: LiveData<StepsData> get() = _stepsData
 
     // Agora essa função pode receber uma data opcional
-    fun loadSteps(healthConnectClient: HealthConnectClient, date: java.time.LocalDate? = null) {
-        val targetDate = date ?: java.time.LocalDate.now()  // Se não passar a data, usa hoje
+    fun loadSteps(healthConnectClient: HealthConnectClient, date: LocalDate? = null) {
+        val targetDate = date ?: LocalDate.now()  // Se não passar a data, usa hoje
         readStepsForDate(healthConnectClient, targetDate)
     }
 
-    private fun readStepsForDate(healthConnectClient: HealthConnectClient, date: java.time.LocalDate) {
+    private fun readStepsForDate(healthConnectClient: HealthConnectClient, date: LocalDate) {
         viewModelScope.launch {
             // Define o início do dia selecionado
             val startTime = date.atStartOfDay(ZoneId.systemDefault()).toInstant()

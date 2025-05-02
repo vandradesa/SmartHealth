@@ -1,4 +1,4 @@
-package com.example.bemestarinteligenteapp.viewmodel
+package com.example.bemestarinteligenteapp.viewmodel.steps
 
 import android.content.Context
 import androidx.lifecycle.ViewModel
@@ -13,7 +13,7 @@ class StepsViewModelFactory(private val context: Context) : ViewModelProvider.Fa
         if (modelClass.isAssignableFrom(StepsViewModel::class.java)) {
             val healthConnectClient = HealthConnectClient.getOrCreate(context)
             val stepsManager = StepsManager(healthConnectClient)
-            val repository = HealthDataRepositoryImpl(stepsManager)
+            val repository = HealthDataRepositoryImpl(stepsManager,null)
             return StepsViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

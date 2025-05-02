@@ -2,8 +2,8 @@ package com.example.bemestarinteligenteapp.model
 
 import java.time.Instant
 
-data class StepsData(
+data class HeartRateData(
     val startTime: Instant,
     val endTime: Instant,
-    val count: Long?
+    val bpm: Double
 )

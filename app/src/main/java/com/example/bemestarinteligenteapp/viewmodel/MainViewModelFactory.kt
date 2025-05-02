@@ -1,4 +1,4 @@
-package com.example.bemestarinteligenteapp.viewmodel
+/*package com.example.bemestarinteligenteapp.viewmodel
 
 import android.content.Context
 import androidx.health.connect.client.HealthConnectClient
@@ -24,4 +24,4 @@ class MainViewModelFactory(
         }
         throw IllegalArgumentException("Unknown ViewModel class")
     }
-}
+}*/
