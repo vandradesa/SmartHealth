@@ -20,8 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.bemestarinteligenteapp.util.formatLocalDateTime
 import java.time.Instant
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
+import java.time.LocalDate
 
 
 @Composable
@@ -46,13 +45,13 @@ fun SummaryCard(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(title, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006064))
+            Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006064))
             Spacer(Modifier.height(16.dp))
 
             if (valueText != null) {
                 Text(
                     text = if (unit.isNotEmpty()) "$valueText $unit" else valueText,
-                    fontSize = 36.sp,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color(0xFF004D40)
                 )
@@ -94,5 +93,53 @@ fun HeartRateSummaryCard(
     )
 
 }
+
+@Composable
+fun AverageHeartRateSummaryCard(
+    averageBpm: Double?,
+    date: LocalDate,
+    modifier: Modifier = Modifier
+) {
+
+    SummaryCard(
+        title    = "Média Cardíaca",
+        valueText = averageBpm?.let { "%.1f".format(it) },
+        unit     = "bpm",
+        subtitle = "",
+        modifier  = modifier
+    )
+}
+
+@Composable
+fun OxygenSaturationSummaryCard(
+    oxygenSaturation: Double?,
+    measurementTime: Instant?,
+    modifier: Modifier = Modifier
+) {
+    SummaryCard(
+        title = "Saturação de Oxigênio",
+        valueText = if (oxygenSaturation != null) oxygenSaturation?.let { "%.1f".format(it) } else "sem dados disponíveis",
+        unit = if  (oxygenSaturation != null) "%" else "",
+        subtitle  = if (oxygenSaturation != null) measurementTime?.formatLocalDateTime().toString() else "",
+        modifier = modifier
+    )
+}
+
+
+@Composable
+fun SleepSummaryCard(
+    sleepDuration: Long?,
+    modifier: Modifier = Modifier
+) {
+    SummaryCard(
+        title = "Duração do Sono",
+        valueText = if (sleepDuration != null) sleepDuration.toString() else "",
+        unit = if (sleepDuration != null) "h" else "",
+        subtitle = if (sleepDuration != null) "Sono total registrado" else "Sem dados disponíveis",
+        modifier = modifier
+
+    )
+}
+
 
 

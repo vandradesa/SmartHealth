@@ -8,6 +8,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bemestarinteligenteapp.model.HeartRateData
 import com.example.bemestarinteligenteapp.repository.HealthDataRepository
+import com.example.bemestarinteligenteapp.util.formatLocalDateTime
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Instant
@@ -30,45 +31,53 @@ class HeartRateViewModel(
     private val _latestMeasurementTime = MutableLiveData<Instant?>()
     val latestMeasurementTime: LiveData<Instant?> get() = _latestMeasurementTime
 
-    // Agora essa função pode receber uma data opcional
-    fun loadHeartRate(healthConnectClient: HealthConnectClient, date: LocalDate? = null) {
+    // LiveData: média de BPM do dia selecionado
+    private val _averageHeartRate = MutableLiveData<Double?>()
+    val averageHeartRate: LiveData<Double?> get() = _averageHeartRate
+
+    /**
+     * Carrega os dados de frequência cardíaca para uma data específica (ou hoje, se date == null),
+     * calcula a média e preenche os LiveDatas.
+     */
+     fun loadHeartRate(healthConnectClient: HealthConnectClient, date: LocalDate? = null) {
         val targetDate = date ?: LocalDate.now()  // Se não passar a data, usa hoje
         readHeartRateForDate(healthConnectClient, targetDate)
     }
 
+    /**
+     * Função interna que faz a query ao repositório, filtra o intervalo de 00:00 até 23:59 do dia,
+     * popula os dados brutos, o último valor e calcula a média.
+     */
     private fun readHeartRateForDate(healthConnectClient: HealthConnectClient, date: LocalDate) {
         viewModelScope.launch {
-            // Define o início do dia selecionado
             val startTime = date.atStartOfDay(ZoneId.systemDefault()).toInstant()
+            val endTime = date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
 
-            // Define o final do dia selecionado (23:59:59.999)
-            val endTime = date.plusDays(1)
-                .atStartOfDay(ZoneId.systemDefault())
-                .toInstant()
+            val data = healthDataRepository.getHeartRateData(startTime, endTime)
+            val sortedData = data?.sortedBy { it.time }
 
-            val data = healthDataRepository.getHeartRateData(
-                startTime,
-                endTime
-            )
+            _heartRateData.value = sortedData
 
-            _heartRateData.value = data
-
-            // Se a lista de dados não estiver vazia, obtemos o último valor de BPM
-            if (data?.isNotEmpty() == true) {
-                val latest = data.last()
+            if (!sortedData.isNullOrEmpty()) {
+                val latest = sortedData.last()
                 _latestHeartRate.value = latest.bpm
-                _latestMeasurementTime.value = latest.endTime
+                _latestMeasurementTime.value = latest.time
 
-                // Adicionando logs para verificar os valores
+                val sumBpm = sortedData.sumOf { it.bpm}
+                val avgBpm = sumBpm / sortedData.size
+                _averageHeartRate.value = avgBpm
+
+                val formatted = latest.time.formatLocalDateTime()
+                Log.d("HeartRateLogs", "Hora da última medição: ${formatted}")
                 Timber.tag("HeartRateLogs").d("Última frequência cardíaca: ${latest.bpm}")
-                Log.d("HeartRateLogs", "Hora da última medição: ${latest.endTime}")
+                Log.d("HeartRateLogs", "Hora da última medição: ${latest.time}")
             } else {
                 _latestHeartRate.value = null
                 _latestMeasurementTime.value = null
-                // Adicionando logs quando não há dados
+                _averageHeartRate.value = null
+
                 Log.d("HeartRateLogs", "Nenhum dado de frequência cardíaca encontrado.")
             }
         }
     }
-
 }

@@ -13,7 +13,7 @@ class StepsViewModelFactory(private val context: Context) : ViewModelProvider.Fa
         if (modelClass.isAssignableFrom(StepsViewModel::class.java)) {
             val healthConnectClient = HealthConnectClient.getOrCreate(context)
             val stepsManager = StepsManager(healthConnectClient)
-            val repository = HealthDataRepositoryImpl(stepsManager,null)
+            val repository = HealthDataRepositoryImpl(stepsManager,null, null, null)
             return StepsViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

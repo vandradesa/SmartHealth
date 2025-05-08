@@ -16,12 +16,13 @@ class HeartRateManager(private val healthConnectClient: HealthConnectClient) {
                 timeRangeFilter = TimeRangeFilter.Companion.between(startTime, endTime)
             )
         )
-        return response.records.map { record ->
-            HeartRateData(
-                startTime = record.startTime,
-                endTime = record.endTime,
-                bpm = record.samples.map { it.beatsPerMinute }.average() // média dos samples
+        // Aqui extraímos cada sample como um dado individual
+        return response.records.flatMap { record ->
+            record.samples.map { sample ->
+                HeartRateData(
+                    time = sample.time,
+                    bpm = sample.beatsPerMinute.toDouble()
             )
         }
     }
-}
+}}

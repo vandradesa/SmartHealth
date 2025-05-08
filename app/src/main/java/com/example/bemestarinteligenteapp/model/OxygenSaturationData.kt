@@ -2,7 +2,7 @@ package com.example.bemestarinteligenteapp.model
 
 import java.time.Instant
 
-data class HeartRateData(
+data class OxygenSaturationData(
     val time: Instant,
-    val bpm: Double
+    val percentage: Double
 )

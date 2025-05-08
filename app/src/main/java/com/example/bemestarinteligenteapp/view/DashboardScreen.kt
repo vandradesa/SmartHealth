@@ -22,18 +22,25 @@ import com.example.bemestarinteligenteapp.viewmodel.steps.StepsViewModel
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
+import com.example.bemestarinteligenteapp.viewmodel.oxygenSaturation.OxygenSaturationViewModel
+import com.example.bemestarinteligenteapp.viewmodel.sleep.SleepViewModel
 import java.time.Instant
+import java.time.LocalDate
 
 
 @Composable
 fun DashboardScreenContent(
     steps: Long?,
     heartRate: Double?,
-    measurementTime: Instant?,
+    heartMeasurementTime: Instant?,
+    averageBpm: Double?,
+    oxygenSaturation: Double?,// <— nova prop
+    o2MeasurementTime: Instant?,
+    sleepDuration: Long?,
     modifier: Modifier = Modifier
 ) {
 
-    // DEBUG na própria UI
+ /*   // DEBUG na própria UI
     if (measurementTime != null) {
         Text(
             text = "Debug time: $measurementTime",
@@ -41,10 +48,10 @@ fun DashboardScreenContent(
             color = Color.Red,
             modifier = Modifier.padding(4.dp)
         )
-    }
+    }*/
     // DEBUG: imprime no Logcat o Instant que está chegando
-    LaunchedEffect(measurementTime) {
-        println(">>> measurementTime raw = $measurementTime")
+    LaunchedEffect(heartMeasurementTime) {
+        println(">>> measurementTime raw = $heartMeasurementTime")
     }
     Column(
         modifier = modifier
@@ -66,14 +73,52 @@ fun DashboardScreenContent(
             // Passando os dados de frequência cardíaca para o HeartRateSummaryCard
             HeartRateSummaryCard(
                 heartRate = heartRate,
-                measurementTime = measurementTime,
+                measurementTime = heartMeasurementTime,
                 modifier = Modifier
                     .weight(1f)
                     .height(250.dp)
             )
         }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // ⬇️ mostra a média de hoje
+                AverageHeartRateSummaryCard(
+                    averageBpm = averageBpm,
+                    date = LocalDate.now(),    // sempre hoje
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(250.dp)
+                )
+
+                // Passando os dados de saturação de oxigênio para o OxygenSaturationSummaryCard
+                OxygenSaturationSummaryCard(
+                    oxygenSaturation = oxygenSaturation,
+                    measurementTime = o2MeasurementTime,
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(250.dp)
+                )
+            }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // ⬇️ mostra a média de hoje
+            SleepSummaryCard(
+                sleepDuration = sleepDuration,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(250.dp)
+            )
+        }
+
+        }
     }
-}
+
 
 @Preview(showBackground = true)
 @Composable
@@ -82,7 +127,12 @@ fun DashboardScreenContentPreview() {
         DashboardScreenContent(
             steps = 4321,
             heartRate = 74.5,
-            measurementTime = Instant.parse("2025-05-03T15:30:00Z")
+            heartMeasurementTime = Instant.parse("2025-05-03T15:30:00Z"),
+            averageBpm = 72.3,
+            oxygenSaturation = 98.5,
+            o2MeasurementTime = Instant.parse("2025-05-03T17:40:00Z"),
+            sleepDuration = null
+
         )
     }
 }
@@ -90,15 +140,25 @@ fun DashboardScreenContentPreview() {
 @Composable
 fun DashboardScreen(
     stepsViewModel: StepsViewModel,
-    heartRateViewModel: HeartRateViewModel
+    heartRateViewModel: HeartRateViewModel,
+    oxygenSaturationViewModel: OxygenSaturationViewModel,
+    sleepViewModel: SleepViewModel
 ) {
     val stepsData by stepsViewModel.stepsData.observeAsState()
     val heartRate by heartRateViewModel.latestHeartRate.observeAsState()
-    val measurementTime by heartRateViewModel.latestMeasurementTime.observeAsState(initial = null)
+    val heartMeasurementTime by heartRateViewModel.latestMeasurementTime.observeAsState(initial = null)
+    val averageBpm by heartRateViewModel.averageHeartRate.observeAsState(initial = null)
+    val oxygenSaturation by oxygenSaturationViewModel.latestOxygenSaturation.observeAsState(initial = null) // <— dado de oxigênio
+    val o2MeasurementTime by oxygenSaturationViewModel.latestO2MeasurementTime.observeAsState() // <— dado de oxigênio
+    val sleepDuration by sleepViewModel.totalSleepDurationMillis.observeAsState(initial = null)
 
     DashboardScreenContent(
         steps = stepsData?.count,
         heartRate = heartRate,
-        measurementTime = measurementTime
+        heartMeasurementTime = heartMeasurementTime,
+        averageBpm = averageBpm,
+        oxygenSaturation = oxygenSaturation,
+        o2MeasurementTime = o2MeasurementTime,
+        sleepDuration = sleepDuration
     )
 }

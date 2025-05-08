@@ -1,4 +1,4 @@
-package com.example.bemestarinteligenteapp.viewmodel
+/*package com.example.bemestarinteligenteapp.viewmodel
 
 import androidx.health.connect.client.HealthConnectClient
 import androidx.lifecycle.*
@@ -11,8 +11,8 @@ class MainViewModel(
     private val healthDataRepository: HealthDataRepository
 ) : ViewModel() {
 
-    private val _steps = MutableLiveData<Long>()
-    val steps: LiveData<Long> get() = _steps
+    private val _steps = MutableLiveData<Long?>()
+    val steps: MutableLiveData<Long?> get() = _steps
 
     // Função que chama readSteps de forma abstrata
     fun loadSteps(healthConnectClient: HealthConnectClient) {
@@ -31,4 +31,4 @@ class MainViewModel(
             _steps.value = total
         }
     }
-}
+}*/
