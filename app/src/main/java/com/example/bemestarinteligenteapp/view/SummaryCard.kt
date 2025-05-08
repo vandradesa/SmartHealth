@@ -22,7 +22,6 @@ import com.example.bemestarinteligenteapp.util.formatLocalDateTime
 import java.time.Instant
 import java.time.LocalDate
 
-
 @Composable
 fun SummaryCard(
     title: String,
@@ -48,98 +47,81 @@ fun SummaryCard(
             Text(title, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF006064))
             Spacer(Modifier.height(16.dp))
 
-            if (valueText != null) {
-                Text(
-                    text = if (unit.isNotEmpty()) "$valueText $unit" else valueText,
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color(0xFF004D40)
-                )
-                Spacer(Modifier.height(4.dp))
-                Text(text = subtitle, fontSize = 14.sp, color = Color(0xFF00796B))
-            } else {
-                CircularProgressIndicator()
+            when {
+                valueText != null -> {
+                    Text(
+                        text = if (unit.isNotEmpty()) "$valueText $unit" else valueText,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Color(0xFF004D40)
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(text = subtitle, fontSize = 14.sp, color = Color(0xFF00796B))
+                }
+                else -> {
+                    Text(
+                        text = "Sem dados disponíveis",
+                        fontSize = 16.sp,
+                        color = Color.Gray
+                    )
+
+                }
             }
         }
     }
 }
 
 @Composable
-fun StepSummaryCard(
-    steps: Long?,
-    modifier: Modifier = Modifier
-) {
+fun StepSummaryCard(steps: Long?, modifier: Modifier = Modifier) {
     SummaryCard(
         title = "Passos",
         valueText = steps?.toString(),
         subtitle = "nas últimas 24h",
-        modifier  = modifier
+        modifier = modifier
     )
 }
 
 @Composable
-fun HeartRateSummaryCard(
-    heartRate: Double?,
-    measurementTime: Instant?,
-    modifier: Modifier = Modifier
-) {
-
+fun HeartRateSummaryCard(heartRate: Double?, measurementTime: Instant?, modifier: Modifier = Modifier) {
     SummaryCard(
         title = "Frequência Cardíaca",
         valueText = heartRate?.let { "%.1f".format(it) },
         unit = "bpm",
-        subtitle  = measurementTime?.formatLocalDateTime() ?: "sem dados",
+        subtitle = measurementTime?.formatLocalDateTime() ?: "sem dados",
         modifier = modifier
     )
-
 }
 
 @Composable
-fun AverageHeartRateSummaryCard(
-    averageBpm: Double?,
-    date: LocalDate,
-    modifier: Modifier = Modifier
-) {
-
+fun AverageHeartRateSummaryCard(averageBpm: Double?, date: LocalDate, modifier: Modifier = Modifier) {
     SummaryCard(
-        title    = "Média Cardíaca",
+        title = "Média Cardíaca",
         valueText = averageBpm?.let { "%.1f".format(it) },
-        unit     = "bpm",
-        subtitle = "",
-        modifier  = modifier
+        unit = "bpm",
+        subtitle = "Hoje",
+        modifier = modifier
     )
 }
 
 @Composable
-fun OxygenSaturationSummaryCard(
-    oxygenSaturation: Double?,
-    measurementTime: Instant?,
-    modifier: Modifier = Modifier
-) {
+fun OxygenSaturationSummaryCard(oxygenSaturation: Double?, measurementTime: Instant?, modifier: Modifier = Modifier) {
     SummaryCard(
         title = "Saturação de Oxigênio",
-        valueText = if (oxygenSaturation != null) oxygenSaturation?.let { "%.1f".format(it) } else "sem dados disponíveis",
-        unit = if  (oxygenSaturation != null) "%" else "",
-        subtitle  = if (oxygenSaturation != null) measurementTime?.formatLocalDateTime().toString() else "",
+        valueText = oxygenSaturation?.let { "%.1f".format(it) },
+        unit = if (oxygenSaturation != null) "%" else "",
+        subtitle = measurementTime?.formatLocalDateTime() ?: "sem dados",
         modifier = modifier
     )
 }
-
 
 @Composable
-fun SleepSummaryCard(
-    sleepDuration: Long?,
-    modifier: Modifier = Modifier
-) {
+fun SleepSummaryCard(sleepDuration: Long?, modifier: Modifier = Modifier) {
     SummaryCard(
         title = "Duração do Sono",
-        valueText = if (sleepDuration != null) sleepDuration.toString() else "",
+        valueText = sleepDuration?.let { (it / (1000 * 60 * 60)).toString() }, // de millis para horas
         unit = if (sleepDuration != null) "h" else "",
-        subtitle = if (sleepDuration != null) "Sono total registrado" else "Sem dados disponíveis",
+        subtitle = if (sleepDuration != null) "Sono total registrado" else "sem dados",
         modifier = modifier
-
     )
 }
-
-
 

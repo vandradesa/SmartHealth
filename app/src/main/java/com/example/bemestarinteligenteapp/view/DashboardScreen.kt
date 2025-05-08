@@ -129,8 +129,8 @@ fun DashboardScreenContentPreview() {
             heartRate = 74.5,
             heartMeasurementTime = Instant.parse("2025-05-03T15:30:00Z"),
             averageBpm = 72.3,
-            oxygenSaturation = 98.5,
-            o2MeasurementTime = Instant.parse("2025-05-03T17:40:00Z"),
+            oxygenSaturation = null,
+            o2MeasurementTime = null,
             sleepDuration = null
 
         )
