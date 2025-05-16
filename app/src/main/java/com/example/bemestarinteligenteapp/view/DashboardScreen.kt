@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.livedata.observeAsState
@@ -20,8 +19,7 @@ import com.example.bemestarinteligenteapp.ui.theme.BemEstarInteligenteAppTheme
 import com.example.bemestarinteligenteapp.viewmodel.heartRate.HeartRateViewModel
 import com.example.bemestarinteligenteapp.viewmodel.steps.StepsViewModel
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.sp
+import com.example.bemestarinteligenteapp.viewmodel.calories.CaloriesViewModel
 import com.example.bemestarinteligenteapp.viewmodel.oxygenSaturation.OxygenSaturationViewModel
 import com.example.bemestarinteligenteapp.viewmodel.sleep.SleepViewModel
 import java.time.Instant
@@ -37,6 +35,8 @@ fun DashboardScreenContent(
     oxygenSaturation: Double?,// <— nova prop
     o2MeasurementTime: Instant?,
     sleepDuration: Long?,
+    sleepQuality: String?,  // Agora é uma String
+    caloriesBurned: Double?,
     modifier: Modifier = Modifier
 ) {
 
@@ -110,6 +110,14 @@ fun DashboardScreenContent(
             // ⬇️ mostra a média de hoje
             SleepSummaryCard(
                 sleepDuration = sleepDuration,
+                sleepQuality = sleepQuality,  // <-- agora passando a string de qualidade do sono
+                modifier = Modifier
+                    .weight(1f)
+                    .height(250.dp)
+            )
+
+            CaloriesSummaryCard(
+                calories = caloriesBurned,
                 modifier = Modifier
                     .weight(1f)
                     .height(250.dp)
@@ -131,7 +139,9 @@ fun DashboardScreenContentPreview() {
             averageBpm = 72.3,
             oxygenSaturation = null,
             o2MeasurementTime = null,
-            sleepDuration = null
+            sleepDuration =  8 * 60 * 60 * 1000L,
+            sleepQuality = "Boa",
+            caloriesBurned = 30.0
 
         )
     }
@@ -142,7 +152,8 @@ fun DashboardScreen(
     stepsViewModel: StepsViewModel,
     heartRateViewModel: HeartRateViewModel,
     oxygenSaturationViewModel: OxygenSaturationViewModel,
-    sleepViewModel: SleepViewModel
+    sleepViewModel: SleepViewModel,
+    caloriesViewModel: CaloriesViewModel
 ) {
     val stepsData by stepsViewModel.stepsData.observeAsState()
     val heartRate by heartRateViewModel.latestHeartRate.observeAsState()
@@ -151,6 +162,8 @@ fun DashboardScreen(
     val oxygenSaturation by oxygenSaturationViewModel.latestOxygenSaturation.observeAsState(initial = null) // <— dado de oxigênio
     val o2MeasurementTime by oxygenSaturationViewModel.latestO2MeasurementTime.observeAsState() // <— dado de oxigênio
     val sleepDuration by sleepViewModel.totalSleepDurationMillis.observeAsState(initial = null)
+    val sleepQuality by sleepViewModel.sleepQuality.observeAsState()
+    val caloriesBurned by caloriesViewModel.caloriesData.observeAsState()
 
     DashboardScreenContent(
         steps = stepsData?.count,
@@ -159,6 +172,8 @@ fun DashboardScreen(
         averageBpm = averageBpm,
         oxygenSaturation = oxygenSaturation,
         o2MeasurementTime = o2MeasurementTime,
-        sleepDuration = sleepDuration
+        sleepDuration = sleepDuration,
+        sleepQuality = sleepQuality,
+        caloriesBurned = caloriesBurned
     )
 }

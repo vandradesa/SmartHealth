@@ -115,13 +115,39 @@ fun OxygenSaturationSummaryCard(oxygenSaturation: Double?, measurementTime: Inst
 }
 
 @Composable
-fun SleepSummaryCard(sleepDuration: Long?, modifier: Modifier = Modifier) {
+fun SleepSummaryCard(
+    sleepDuration: Long?,
+    sleepQuality: String?,  // String representando a qualidade
+    modifier: Modifier = Modifier
+) {
+    val durationHours = sleepDuration?.let { (it / (1000 * 60 * 60)).toString() }
+    val subtitleText = when {
+        sleepDuration == null -> "Sem dados"
+        !sleepQuality.isNullOrBlank() -> "Qualidade: $sleepQuality"
+        else -> "Sono total registrado"
+    }
+
     SummaryCard(
         title = "Duração do Sono",
-        valueText = sleepDuration?.let { (it / (1000 * 60 * 60)).toString() }, // de millis para horas
+        valueText = durationHours,
         unit = if (sleepDuration != null) "h" else "",
-        subtitle = if (sleepDuration != null) "Sono total registrado" else "sem dados",
+        subtitle = subtitleText,
         modifier = modifier
     )
 }
+
+
+@Composable
+fun CaloriesSummaryCard(calories: Double?, modifier: Modifier = Modifier) {
+    SummaryCard(
+        title = "Calorias Gastas",
+        valueText = calories?.let { "%.0f".format(it) },
+        unit = if (calories != null) "kcal" else "",
+        subtitle = "hoje",
+        modifier = modifier
+    )
+}
+
+
+
 

@@ -1,5 +1,6 @@
 package com.example.bemestarinteligenteapp.repository
 
+import com.example.bemestarinteligenteapp.healthconnect.calories.CaloriesManager
 import com.example.bemestarinteligenteapp.healthconnect.heartRate.HeartRateManager
 import com.example.bemestarinteligenteapp.healthconnect.oxygen.OxygenSaturationManager
 import com.example.bemestarinteligenteapp.healthconnect.sleep.SleepManager
@@ -29,14 +30,21 @@ interface HealthDataRepository {
         startTime: Instant,
         endTime: Instant
     ): List<SleepData>?
-}
 
+    suspend fun getCaloriesData(
+        startTime: Instant,
+        endTime: Instant)
+    : Double?
+
+}
 
 class HealthDataRepositoryImpl(
     private val stepsManager: StepsManager?,
     private val heartRateManager: HeartRateManager?,
     private val oxygenSaturationManager: OxygenSaturationManager?,
-    private val sleepManager: SleepManager?
+    private val sleepManager: SleepManager?,
+    private val caloriesManager: CaloriesManager? // Novo
+
 ) : HealthDataRepository {
 
     override suspend fun getStepsData(
@@ -65,6 +73,13 @@ class HealthDataRepositoryImpl(
         endTime: Instant
     ): List<SleepData>? {
         return sleepManager?.readSleepSessions(startTime, endTime)
+    }
+
+    override suspend fun getCaloriesData(
+        startTime: Instant,
+        endTime: Instant
+    ): Double? {
+        return caloriesManager?.readCalories(startTime, endTime)
     }
 
 }

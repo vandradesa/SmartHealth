@@ -13,7 +13,7 @@ class SleepViewModelFactory(private val context: Context) : ViewModelProvider.Fa
         if (modelClass.isAssignableFrom(SleepViewModel::class.java)) {
             val healthConnectClient = HealthConnectClient.getOrCreate(context)
             val sleepManager = SleepManager(healthConnectClient) // Este é o seu SleepManager
-            val repository = HealthDataRepositoryImpl(null, null, null, sleepManager)
+            val repository = HealthDataRepositoryImpl(null, null, null, sleepManager, null)
             return SleepViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

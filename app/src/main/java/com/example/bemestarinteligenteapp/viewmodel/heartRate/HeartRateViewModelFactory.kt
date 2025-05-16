@@ -13,7 +13,7 @@ class HeartRateViewModelFactory(private val context: Context) : ViewModelProvide
         if (modelClass.isAssignableFrom(HeartRateViewModel::class.java)) {
             val healthConnectClient = HealthConnectClient.getOrCreate(context)
             val heartRateManager = HeartRateManager(healthConnectClient)
-            val repository = HealthDataRepositoryImpl(null, heartRateManager, null, null)
+            val repository = HealthDataRepositoryImpl(null, heartRateManager, null, null, null)
             return HeartRateViewModel(repository) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
