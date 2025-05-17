@@ -41,22 +41,30 @@ class SleepViewModel(
      */
     private fun readSleepDataForDate(healthConnectClient: HealthConnectClient, date: LocalDate) {
         viewModelScope.launch {
-            val startTime = date.atStartOfDay(ZoneId.systemDefault()).toInstant()
-            val endTime = date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
+            val startTime = date.minusDays(1).atTime(18, 0).atZone(ZoneId.systemDefault())
+                .toInstant() // 18h dia anterior
+            val endTime = date.atTime(12, 0).atZone(ZoneId.systemDefault())
+                .toInstant()               // 12h do dia atual
 
             val data = healthDataRepository.getSleepData(startTime, endTime)
+            Log.d("SleepLogs", "Dados brutos recebidos: $data")
+
             val sortedData = data?.sortedBy { it.sessionStart }
 
             _sleepData.value = sortedData
 
             if (!sortedData.isNullOrEmpty()) {
-                val totalDuration = sortedData.sumOf { it.durationMillis }
+                val filteredSessions = filterOverlappingSessions(sortedData)
+                val totalDuration = filteredSessions.sumOf { it.durationMillis }
                 _totalSleepDurationMillis.value = totalDuration
-                evaluateSleepQuality(sortedData)
+                evaluateSleepQuality(filteredSessions)
 
 
-                Log.d("SleepLogs", "Sessões de sono: ${sortedData.size}")
-                Log.d("SleepLogs", "Duração total: ${totalDuration / 1000 / 60} minutos")
+                Log.d("SleepLogs", "Sessões de sono após filtro: ${filteredSessions.size}")
+                Log.d(
+                    "SleepLogs",
+                    "Duração total após filtro: ${totalDuration / 1000 / 60} minutos"
+                )
             } else {
                 _totalSleepDurationMillis.value = null
                 _sleepQuality.value = "Nenhuma sessão de sono encontrada."
@@ -65,6 +73,38 @@ class SleepViewModel(
             }
         }
     }
+
+    private fun filterOverlappingSessions(sessions: List<SleepData>): List<SleepData> {
+        val sortedSessions = sessions.sortedBy { it.sessionStart }
+        val filteredSessions = mutableListOf<SleepData>()
+
+        for (session in sortedSessions) {
+            if (filteredSessions.isEmpty()) {
+                filteredSessions.add(session)
+            } else {
+                val lastSession = filteredSessions.last()
+                // Se o início da sessão atual for antes do fim da última sessão, tem sobreposição
+                if (session.sessionStart < lastSession.sessionEnd) {
+                    // Mantém a sessão com maior duração
+                    val lastDuration =
+                        lastSession.sessionEnd.toEpochMilli() - lastSession.sessionStart.toEpochMilli()
+                    val currentDuration =
+                        session.sessionEnd.toEpochMilli() - session.sessionStart.toEpochMilli()
+
+                    if (currentDuration > lastDuration) {
+                        // Substitui a última sessão pela atual (maior duração)
+                        filteredSessions[filteredSessions.size - 1] = session
+                    }
+                    // Se a duração for menor, ignora esta sessão
+                } else {
+                    filteredSessions.add(session)
+                }
+            }
+        }
+
+        return filteredSessions
+    }
+
 
     private fun evaluateSleepQuality(sleepSessions: List<SleepData>) {
         if (sleepSessions.isEmpty()) {
@@ -75,50 +115,93 @@ class SleepViewModel(
         var deepSleepDuration = 0L
         var remSleepDuration = 0L
         var lightSleepDuration = 0L
+        var sleepingDuration = 0L
         var awakeningsCount = 0
 
         sleepSessions.forEach { session ->
             session.stages.forEach { stage ->
-                val stageDuration = stage.endTime.toEpochMilli() - stage.startTime.toEpochMilli()
-
+                val duration = stage.endTime.toEpochMilli() - stage.startTime.toEpochMilli()
                 when (stage.stage) {
-                    2 -> deepSleepDuration += stageDuration
-                    0 -> remSleepDuration += stageDuration
-                    1 -> lightSleepDuration += stageDuration
+                    5 -> deepSleepDuration += duration // DEEP
+                    6 -> remSleepDuration += duration  // REM
+                    4 -> lightSleepDuration += duration // LIGHT
+                    2 -> sleepingDuration += duration // dormindo mas o estagio é desconhecido
+                    3 -> awakeningsCount += 1          // AWAKE OUT OF BED
+                    1 -> awakeningsCount += 1
                 }
             }
-            awakeningsCount += session.stages.count { it.stage == 3 }
         }
 
-        val totalSleepMillis = deepSleepDuration + remSleepDuration + lightSleepDuration
+        val totalSleepMillis =
+            deepSleepDuration + remSleepDuration + lightSleepDuration + sleepingDuration
         if (totalSleepMillis <= 0) {
-            _sleepQuality.value = "Não foi possível calcular a qualidade do sono devido à falta de dados de sono."
+            _sleepQuality.value =
+                "Não foi possível calcular a qualidade do sono devido à falta de dados de sono."
             return
         }
 
-        val totalSleepHours = totalSleepMillis / 1000 / 60 / 60
+        val totalSleepHours = totalSleepMillis.toDouble() / 1000 / 60 / 60
+
+        Log.d("Sono", "Deep: $deepSleepDuration ms")
+        Log.d("Sono", "REM: $remSleepDuration ms")
+        Log.d("Sono", "Light: $lightSleepDuration ms")
+        Log.d("Sono", "Total: $totalSleepMillis ms")
+        Log.d("Sono", "Total horas de sono: $totalSleepHours")
+
         val deepSleepPercentage = (deepSleepDuration * 100) / totalSleepMillis
         val remSleepPercentage = (remSleepDuration * 100) / totalSleepMillis
         val lightSleepPercentage = (lightSleepDuration * 100) / totalSleepMillis
 
+        Log.d("Sono", "Porcentagem Sono Profundo (Deep): $deepSleepPercentage%")
+        Log.d("Sono", "Porcentagem Sono REM: $remSleepPercentage%")
+        Log.d("Sono", "Porcentagem Sono Leve (Light): $lightSleepPercentage%")
+
+        // Verificação dos problemas
+        val issues = mutableListOf<String>()
+
+        if (deepSleepPercentage !in 20..40) issues.add("sono profundo fora da faixa ideal")
+        if (remSleepPercentage !in 10..30) issues.add("sono REM fora da faixa ideal")
+        if (lightSleepPercentage !in 20..60) issues.add("sono leve fora da faixa ideal")
+        if (awakeningsCount > 2) issues.add("muitos despertares")
+
         val sleepQuality = when {
-            totalSleepHours >= 7 && deepSleepPercentage in 15..20 && remSleepPercentage in 20..25 && lightSleepPercentage in 45..55 && awakeningsCount < 3 ->
-                "Bom"
-            totalSleepHours >= 6 && deepSleepPercentage in 10..15 && remSleepPercentage in 15..20 && lightSleepPercentage in 40..60 && awakeningsCount < 5 ->
-                "Razoável"
+            totalSleepHours >= 7 -> {
+                if (issues.isEmpty()) "Bom" else "Razoável"
+            }
+
+            totalSleepHours >= 6 -> {
+                if (issues.isEmpty()) "Razoável" else "Ruim"
+            }
+
             else -> "Ruim"
         }
 
-        val mainIssue = when {
-            deepSleepPercentage < 15 -> "Pouco sono profundo. Tente evitar luz azul e cafeína antes de dormir."
-            remSleepPercentage < 20 -> "Sono REM abaixo do ideal. Pode ser causado por estresse ou falta de relaxamento antes de dormir."
-            lightSleepPercentage > 55 -> "Sono leve excessivo. Talvez sua rotina esteja irregular ou o ambiente não seja propício para o descanso."
-            awakeningsCount > 5 -> "Muitos despertares durante a noite. Verifique se há ruídos ou fatores externos afetando seu sono."
-            totalSleepHours < 6 -> "Sono insuficiente. Tente dormir mais cedo e estabelecer uma rotina consistente."
-            else -> "Seu sono parece bem equilibrado! Continue mantendo uma boa rotina de descanso."
+        // Mensagem sobre o tempo total de sono
+        val sleepTimeMessage = if (totalSleepHours < 6) {
+            "Sono insuficiente. Tente dormir mais cedo e manter uma rotina regular."
+        } else if (totalSleepHours >= 7) {
+            "Tempo de sono ideal."
+        } else {
+            "Tempo de sono razoável, mas pode melhorar."
         }
 
-        _sleepQuality.value = "Qualidade do Sono: **$sleepQuality**\nPrincipal Problema: $mainIssue"
+// Mensagem sobre problemas nos estágios do sono
+        val sleepStageMessage = if (issues.isEmpty()) {
+            "Não houve problemas nos estágios de sono profundo, REM ou leve."
+        } else {
+            when {
+                issues.any { it.contains("profundo") } -> "Pouco sono profundo. Evite luz azul e estresse antes de dormir."
+                issues.any { it.contains("REM") } -> "Sono REM abaixo do ideal. Pratique relaxamento antes de dormir."
+                issues.any { it.contains("leve") } -> "Sono leve excessivo. Verifique ruídos ou iluminação no quarto."
+                issues.any { it.contains("despertares") } -> "Você acordou muitas vezes. Verifique se há desconfortos ou barulhos."
+                else -> "Seu sono apresenta pequenas irregularidades."
+            }
+        }
+
+// Combina as duas mensagens para exibir
+        _sleepQuality.value = "$sleepQuality\n - $sleepTimeMessage\n - $sleepStageMessage"
+
+
     }
 
 }

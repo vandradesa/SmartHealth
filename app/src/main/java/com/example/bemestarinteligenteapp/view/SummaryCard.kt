@@ -123,7 +123,7 @@ fun SleepSummaryCard(
     val durationHours = sleepDuration?.let { (it / (1000 * 60 * 60)).toString() }
     val subtitleText = when {
         sleepDuration == null -> "Sem dados"
-        !sleepQuality.isNullOrBlank() -> "Qualidade: $sleepQuality"
+        !sleepQuality.isNullOrBlank() -> "Qualidade do sono: $sleepQuality"
         else -> "Sono total registrado"
     }
 

@@ -1,13 +1,20 @@
 package com.example.bemestarinteligenteapp.view
 
+import android.app.DatePickerDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.livedata.observeAsState
@@ -19,133 +26,18 @@ import com.example.bemestarinteligenteapp.ui.theme.BemEstarInteligenteAppTheme
 import com.example.bemestarinteligenteapp.viewmodel.heartRate.HeartRateViewModel
 import com.example.bemestarinteligenteapp.viewmodel.steps.StepsViewModel
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.health.connect.client.HealthConnectClient
 import com.example.bemestarinteligenteapp.viewmodel.calories.CaloriesViewModel
 import com.example.bemestarinteligenteapp.viewmodel.oxygenSaturation.OxygenSaturationViewModel
 import com.example.bemestarinteligenteapp.viewmodel.sleep.SleepViewModel
 import java.time.Instant
 import java.time.LocalDate
-
-
-@Composable
-fun DashboardScreenContent(
-    steps: Long?,
-    heartRate: Double?,
-    heartMeasurementTime: Instant?,
-    averageBpm: Double?,
-    oxygenSaturation: Double?,// <— nova prop
-    o2MeasurementTime: Instant?,
-    sleepDuration: Long?,
-    sleepQuality: String?,  // Agora é uma String
-    caloriesBurned: Double?,
-    modifier: Modifier = Modifier
-) {
-
- /*   // DEBUG na própria UI
-    if (measurementTime != null) {
-        Text(
-            text = "Debug time: $measurementTime",
-            fontSize = 12.sp,
-            color = Color.Red,
-            modifier = Modifier.padding(4.dp)
-        )
-    }*/
-    // DEBUG: imprime no Logcat o Instant que está chegando
-    LaunchedEffect(heartMeasurementTime) {
-        println(">>> measurementTime raw = $heartMeasurementTime")
-    }
-    Column(
-        modifier = modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp)
-            .padding(top = 16.dp)
-            .wrapContentWidth(Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.Top
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Passando os dados de steps para o StepSummaryCard
-            StepSummaryCard(
-                steps = steps,
-                modifier = Modifier.weight(1f)
-            )
-            // Passando os dados de frequência cardíaca para o HeartRateSummaryCard
-            HeartRateSummaryCard(
-                heartRate = heartRate,
-                measurementTime = heartMeasurementTime,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(250.dp)
-            )
-        }
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                // ⬇️ mostra a média de hoje
-                AverageHeartRateSummaryCard(
-                    averageBpm = averageBpm,
-                    date = LocalDate.now(),    // sempre hoje
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(250.dp)
-                )
-
-                // Passando os dados de saturação de oxigênio para o OxygenSaturationSummaryCard
-                OxygenSaturationSummaryCard(
-                    oxygenSaturation = oxygenSaturation,
-                    measurementTime = o2MeasurementTime,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(250.dp)
-                )
-            }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // ⬇️ mostra a média de hoje
-            SleepSummaryCard(
-                sleepDuration = sleepDuration,
-                sleepQuality = sleepQuality,  // <-- agora passando a string de qualidade do sono
-                modifier = Modifier
-                    .weight(1f)
-                    .height(250.dp)
-            )
-
-            CaloriesSummaryCard(
-                calories = caloriesBurned,
-                modifier = Modifier
-                    .weight(1f)
-                    .height(250.dp)
-            )
-        }
-
-        }
-    }
-
-
-@Preview(showBackground = true)
-@Composable
-fun DashboardScreenContentPreview() {
-    BemEstarInteligenteAppTheme {
-        DashboardScreenContent(
-            steps = 4321,
-            heartRate = 74.5,
-            heartMeasurementTime = Instant.parse("2025-05-03T15:30:00Z"),
-            averageBpm = 72.3,
-            oxygenSaturation = null,
-            o2MeasurementTime = null,
-            sleepDuration =  8 * 60 * 60 * 1000L,
-            sleepQuality = "Boa",
-            caloriesBurned = 30.0
-
-        )
-    }
-}
+import java.util.Calendar
 
 @Composable
 fun DashboardScreen(
@@ -155,25 +47,163 @@ fun DashboardScreen(
     sleepViewModel: SleepViewModel,
     caloriesViewModel: CaloriesViewModel
 ) {
+    val context = LocalContext.current
+    val healthConnectClient = HealthConnectClient.getOrCreate(context)
+
+    var selectedDate by rememberSaveable { mutableStateOf(LocalDate.now()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+
+    if (showDatePicker) {
+        // DatePickerDialog nativo do Android
+        val calendar = Calendar.getInstance()
+        calendar.set(selectedDate.year, selectedDate.monthValue - 1, selectedDate.dayOfMonth)
+
+        DatePickerDialog(
+            context,
+            { _, year, month, dayOfMonth ->
+                selectedDate = LocalDate.of(year, month + 1, dayOfMonth)
+                showDatePicker = false
+            },
+            calendar.get(Calendar.YEAR),
+            calendar.get(Calendar.MONTH),
+            calendar.get(Calendar.DAY_OF_MONTH)
+        ).show()
+    }
+
+    // Carregar dados para a data selecionada
+    LaunchedEffect(selectedDate) {
+        stepsViewModel.loadSteps(healthConnectClient, selectedDate)
+        heartRateViewModel.loadHeartRate(healthConnectClient, selectedDate)
+        oxygenSaturationViewModel.loadOxygenSaturation(healthConnectClient, selectedDate)
+        sleepViewModel.loadSleepData(healthConnectClient, selectedDate)
+        caloriesViewModel.loadCalories(healthConnectClient, selectedDate)
+    }
+
+    // Observar dados dos ViewModels
     val stepsData by stepsViewModel.stepsData.observeAsState()
     val heartRate by heartRateViewModel.latestHeartRate.observeAsState()
     val heartMeasurementTime by heartRateViewModel.latestMeasurementTime.observeAsState(initial = null)
     val averageBpm by heartRateViewModel.averageHeartRate.observeAsState(initial = null)
-    val oxygenSaturation by oxygenSaturationViewModel.latestOxygenSaturation.observeAsState(initial = null) // <— dado de oxigênio
-    val o2MeasurementTime by oxygenSaturationViewModel.latestO2MeasurementTime.observeAsState() // <— dado de oxigênio
+    val oxygenSaturation by oxygenSaturationViewModel.latestOxygenSaturation.observeAsState(initial = null)
+    val o2MeasurementTime by oxygenSaturationViewModel.latestO2MeasurementTime.observeAsState()
     val sleepDuration by sleepViewModel.totalSleepDurationMillis.observeAsState(initial = null)
     val sleepQuality by sleepViewModel.sleepQuality.observeAsState()
     val caloriesBurned by caloriesViewModel.caloriesData.observeAsState()
 
-    DashboardScreenContent(
-        steps = stepsData?.count,
-        heartRate = heartRate,
-        heartMeasurementTime = heartMeasurementTime,
-        averageBpm = averageBpm,
-        oxygenSaturation = oxygenSaturation,
-        o2MeasurementTime = o2MeasurementTime,
-        sleepDuration = sleepDuration,
-        sleepQuality = sleepQuality,
-        caloriesBurned = caloriesBurned
-    )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        Button(onClick = { showDatePicker = true }) {
+            Text(text = "Selecionar Data: $selectedDate")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        DashboardScreenContent(
+            steps = stepsData?.count,
+            heartRate = heartRate,
+            heartMeasurementTime = heartMeasurementTime,
+            averageBpm = averageBpm,
+            oxygenSaturation = oxygenSaturation,
+            o2MeasurementTime = o2MeasurementTime,
+            sleepDuration = sleepDuration,
+            sleepQuality = sleepQuality,
+            caloriesBurned = caloriesBurned,
+            selectedDate = selectedDate
+        )
+    }
 }
+
+
+@Composable
+fun DashboardScreenContent(
+    steps: Long?,
+    heartRate: Double?,
+    heartMeasurementTime: Instant?,
+    averageBpm: Double?,
+    oxygenSaturation: Double?,
+    o2MeasurementTime: Instant?,
+    sleepDuration: Long?,
+    sleepQuality: String?,
+    caloriesBurned: Double?,
+    selectedDate: LocalDate,
+    modifier: Modifier = Modifier
+) {
+    val scrollState = rememberScrollState()
+
+    LaunchedEffect(heartMeasurementTime) {
+        println(">>> measurementTime raw = $heartMeasurementTime")
+    }
+
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp)
+            .padding(top = 16.dp)
+            .wrapContentWidth(Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.Top
+    ) {
+        Text(text = "Dados para o dia: $selectedDate", modifier = Modifier.padding(bottom = 8.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            StepSummaryCard(
+                steps = steps,
+                modifier = Modifier.weight(1f)
+            )
+            HeartRateSummaryCard(
+                heartRate = heartRate,
+                measurementTime = heartMeasurementTime,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(250.dp)
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            AverageHeartRateSummaryCard(
+                averageBpm = averageBpm,
+                date = selectedDate,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(250.dp)
+            )
+            OxygenSaturationSummaryCard(
+                oxygenSaturation = oxygenSaturation,
+                measurementTime = o2MeasurementTime,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(250.dp)
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            SleepSummaryCard(
+                sleepDuration = sleepDuration,
+                sleepQuality = sleepQuality,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 200.dp, max = 400.dp) // ajuste conforme necessário
+            )
+            CaloriesSummaryCard(
+                calories = caloriesBurned,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(250.dp)
+            )
+        }
+    }
+}
+
+
