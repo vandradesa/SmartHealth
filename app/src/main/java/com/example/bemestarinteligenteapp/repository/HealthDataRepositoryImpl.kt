@@ -1,10 +1,12 @@
 package com.example.bemestarinteligenteapp.repository
 
 import com.example.bemestarinteligenteapp.healthconnect.calories.CaloriesManager
+import com.example.bemestarinteligenteapp.healthconnect.exercises.ExercisesManager
 import com.example.bemestarinteligenteapp.healthconnect.heartRate.HeartRateManager
 import com.example.bemestarinteligenteapp.healthconnect.oxygen.OxygenSaturationManager
 import com.example.bemestarinteligenteapp.healthconnect.sleep.SleepManager
 import com.example.bemestarinteligenteapp.healthconnect.steps.StepsManager
+import com.example.bemestarinteligenteapp.model.ExercisesData
 import com.example.bemestarinteligenteapp.model.HeartRateData
 import com.example.bemestarinteligenteapp.model.OxygenSaturationData
 import com.example.bemestarinteligenteapp.model.SleepData
@@ -36,6 +38,11 @@ interface HealthDataRepository {
         endTime: Instant)
     : Double?
 
+    suspend fun getExerciseData(
+        startTime: Instant,
+        endTime: Instant
+    ): List<ExercisesData>?
+
 }
 
 class HealthDataRepositoryImpl(
@@ -43,7 +50,8 @@ class HealthDataRepositoryImpl(
     private val heartRateManager: HeartRateManager?,
     private val oxygenSaturationManager: OxygenSaturationManager?,
     private val sleepManager: SleepManager?,
-    private val caloriesManager: CaloriesManager? // Novo
+    private val caloriesManager: CaloriesManager?,
+    private val exercisesManager: ExercisesManager? // Novo parâmetr// Novo
 
 ) : HealthDataRepository {
 
@@ -80,6 +88,13 @@ class HealthDataRepositoryImpl(
         endTime: Instant
     ): Double? {
         return caloriesManager?.readCalories(startTime, endTime)
+    }
+
+    override suspend fun getExerciseData(
+        startTime: Instant,
+        endTime: Instant
+    ): List<ExercisesData>? {
+        return exercisesManager?.readExercises(startTime, endTime)
     }
 
 }

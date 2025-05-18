@@ -32,7 +32,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.health.connect.client.HealthConnectClient
+import com.example.bemestarinteligenteapp.model.ExercisesData
 import com.example.bemestarinteligenteapp.viewmodel.calories.CaloriesViewModel
+import com.example.bemestarinteligenteapp.viewmodel.exercise.ExercisesViewModel
 import com.example.bemestarinteligenteapp.viewmodel.oxygenSaturation.OxygenSaturationViewModel
 import com.example.bemestarinteligenteapp.viewmodel.sleep.SleepViewModel
 import java.time.Instant
@@ -45,7 +47,8 @@ fun DashboardScreen(
     heartRateViewModel: HeartRateViewModel,
     oxygenSaturationViewModel: OxygenSaturationViewModel,
     sleepViewModel: SleepViewModel,
-    caloriesViewModel: CaloriesViewModel
+    caloriesViewModel: CaloriesViewModel,
+    exercisesViewModel: ExercisesViewModel
 ) {
     val context = LocalContext.current
     val healthConnectClient = HealthConnectClient.getOrCreate(context)
@@ -77,6 +80,7 @@ fun DashboardScreen(
         oxygenSaturationViewModel.loadOxygenSaturation(healthConnectClient, selectedDate)
         sleepViewModel.loadSleepData(healthConnectClient, selectedDate)
         caloriesViewModel.loadCalories(healthConnectClient, selectedDate)
+        exercisesViewModel.loadExercises(healthConnectClient,selectedDate)
     }
 
     // Observar dados dos ViewModels
@@ -89,6 +93,21 @@ fun DashboardScreen(
     val sleepDuration by sleepViewModel.totalSleepDurationMillis.observeAsState(initial = null)
     val sleepQuality by sleepViewModel.sleepQuality.observeAsState()
     val caloriesBurned by caloriesViewModel.caloriesData.observeAsState()
+    val exerciseData by exercisesViewModel.exercisesData.observeAsState()
+
+    // Montar o resumo dos exercícios na view
+    val exerciseSummary = remember(exerciseData) {
+        exerciseData?.let { data ->
+            // exemplo simples: criar uma string formatada com os dados crus
+            buildString {
+                append("Atividades:\n")
+                data.forEach { exercise ->
+                    val durationMinutes = java.time.Duration.between(exercise.startTime, exercise.endTime).toMinutes()
+                    append("- ${exercise.exerciseType}: $durationMinutes min\n")
+                }
+            }
+        } ?: "Nenhum exercício registrado"
+    }
 
     Column(
         modifier = Modifier
@@ -112,7 +131,10 @@ fun DashboardScreen(
             sleepDuration = sleepDuration,
             sleepQuality = sleepQuality,
             caloriesBurned = caloriesBurned,
-            selectedDate = selectedDate
+            selectedDate = selectedDate,
+            exerciseData = exerciseData
+
+
         )
     }
 }
@@ -130,12 +152,29 @@ fun DashboardScreenContent(
     sleepQuality: String?,
     caloriesBurned: Double?,
     selectedDate: LocalDate,
+    exerciseData: List<ExercisesData>?,  // novo parâmetro aqui
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
 
     LaunchedEffect(heartMeasurementTime) {
         println(">>> measurementTime raw = $heartMeasurementTime")
+    }
+
+    val exerciseSummary = remember(exerciseData) {
+        exerciseData?.let { list ->
+            if (list.isEmpty()) {
+                "Nenhum exercício registrado"
+            } else {
+                buildString {
+                    append("Atividades:\n")
+                    list.forEach { exercise ->
+                        val durationMinutes = java.time.Duration.between(exercise.startTime, exercise.endTime).toMinutes()
+                        append("- ${exercise.exerciseType}: $durationMinutes min\n")
+                    }
+                }
+            }
+        } ?: "Nenhum exercício registrado"
     }
 
     Column(
@@ -203,6 +242,16 @@ fun DashboardScreenContent(
                     .height(250.dp)
             )
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Aqui adiciona o ExerciseSummaryCard em uma Row ou sozinho
+        ExerciseSummaryCard(
+            exerciseSummary = exerciseSummary,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(min = 200.dp, max = 400.dp)
+        )
     }
 }
 

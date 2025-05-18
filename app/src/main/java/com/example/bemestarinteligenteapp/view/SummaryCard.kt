@@ -148,6 +148,17 @@ fun CaloriesSummaryCard(calories: Double?, modifier: Modifier = Modifier) {
     )
 }
 
+@Composable
+fun ExerciseSummaryCard(exerciseSummary: String?, modifier: Modifier = Modifier) {
+    SummaryCard(
+        title = "Exercícios",
+        valueText = exerciseSummary,
+        subtitle = "Resumo do dia",
+        modifier = modifier
+    )
+}
+
+
 
 
 

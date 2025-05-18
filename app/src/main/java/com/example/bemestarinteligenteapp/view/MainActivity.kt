@@ -18,6 +18,8 @@ import androidx.core.net.toUri
 import com.example.bemestarinteligenteapp.ui.theme.BemEstarInteligenteAppTheme
 import com.example.bemestarinteligenteapp.viewmodel.calories.CaloriesViewModel
 import com.example.bemestarinteligenteapp.viewmodel.calories.CaloriesViewModelFactory
+import com.example.bemestarinteligenteapp.viewmodel.exercise.ExercisesViewModel
+import com.example.bemestarinteligenteapp.viewmodel.exercise.ExercisesViewModelFactory
 import com.example.bemestarinteligenteapp.viewmodel.heartRate.HeartRateViewModel
 import com.example.bemestarinteligenteapp.viewmodel.heartRate.HeartRateViewModelFactory
 import com.example.bemestarinteligenteapp.viewmodel.oxygenSaturation.OxygenSaturationViewModel
@@ -36,7 +38,8 @@ private val permissions = setOf(
     HealthPermission.getReadPermission(OxygenSaturationRecord::class),
     HealthPermission.getReadPermission(DistanceRecord::class),
     HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
-    HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class)
+    HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
+    HealthPermission.getReadPermission(ExerciseSessionRecord::class)
 
 )
 
@@ -48,6 +51,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var oxygenSaturationViewModel: OxygenSaturationViewModel
     private lateinit var sleepViewModel: SleepViewModel
     private lateinit var caloriesViewModel: CaloriesViewModel
+    private lateinit var exercisesViewModel: ExercisesViewModel
 
 
     // Inicialização do HealthConnectClient
@@ -66,6 +70,7 @@ class MainActivity : ComponentActivity() {
                 oxygenSaturationViewModel.loadOxygenSaturation(healthConnectClient)
                 sleepViewModel.loadSleepData(healthConnectClient)
                 caloriesViewModel.loadCalories(healthConnectClient)
+                exercisesViewModel.loadExercises(healthConnectClient)
             }
         } else {
             // Caso não tenha permissões, mostramos um aviso ao usuário
@@ -101,6 +106,9 @@ class MainActivity : ComponentActivity() {
         val caloriesFactory = CaloriesViewModelFactory(applicationContext)
         caloriesViewModel = ViewModelProvider(this, caloriesFactory)[CaloriesViewModel::class.java]
 
+        val exercisesFactory = ExercisesViewModelFactory(applicationContext)
+        exercisesViewModel = ViewModelProvider(this, exercisesFactory)[ExercisesViewModel::class.java]
+
         lifecycleScope.launch {
             // Verificando o status do SDK do Health Connect
             val providerPackageName = "com.google.android.apps.healthdata"
@@ -130,6 +138,7 @@ class MainActivity : ComponentActivity() {
                 oxygenSaturationViewModel.loadOxygenSaturation(healthConnectClient)
                 sleepViewModel.loadSleepData(healthConnectClient)
                 caloriesViewModel.loadCalories(healthConnectClient)
+                exercisesViewModel.loadExercises(healthConnectClient)
             } else {
                 // Caso as permissões ainda não tenham sido concedidas, solicitamos ao usuário
                 requestPermissions.launch(permissions)
@@ -150,7 +159,8 @@ class MainActivity : ComponentActivity() {
                         heartRateViewModel = heartRateViewModel,
                         oxygenSaturationViewModel = oxygenSaturationViewModel,
                         sleepViewModel = sleepViewModel,
-                        caloriesViewModel = caloriesViewModel
+                        caloriesViewModel = caloriesViewModel,
+                        exercisesViewModel = exercisesViewModel
                     )
                     //StepsScreen(healthConnectClient = healthConnectClient)  // Passando explicitamente o healthConnectClient
 

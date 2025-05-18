@@ -19,7 +19,8 @@ class CaloriesViewModelFactory(private val context: Context) : ViewModelProvider
                 heartRateManager = null,
                 oxygenSaturationManager = null,
                 sleepManager = null,
-                caloriesManager = caloriesManager // Passa o CaloriesManager aqui
+                caloriesManager = caloriesManager, // Passa o CaloriesManager aqui
+                exercisesManager = null
             )
             return CaloriesViewModel(repository) as T
         }
