@@ -1,6 +1,7 @@
 package com.example.bemestarinteligenteapp.view
 
 import android.app.DatePickerDialog
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -37,9 +38,14 @@ import com.example.bemestarinteligenteapp.viewmodel.calories.CaloriesViewModel
 import com.example.bemestarinteligenteapp.viewmodel.exercise.ExercisesViewModel
 import com.example.bemestarinteligenteapp.viewmodel.oxygenSaturation.OxygenSaturationViewModel
 import com.example.bemestarinteligenteapp.viewmodel.sleep.SleepViewModel
+import kotlinx.serialization.json.Json
 import java.time.Instant
 import java.time.LocalDate
 import java.util.Calendar
+import kotlin.jvm.java
+import kotlinx.serialization.encodeToString
+
+
 
 @Composable
 fun DashboardScreen(
@@ -120,6 +126,24 @@ fun DashboardScreen(
         }
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        Button(onClick = {
+            val intent = Intent(context, DeepSeekActivity::class.java).apply {
+                putExtra("selectedDate", selectedDate.toString())
+                putExtra("heartRate", heartRate ?: 0.0)
+                putExtra("averageHeartRate", averageBpm ?: 0.0)
+                putExtra("oxygenSaturation", oxygenSaturation ?: 0.0)
+                putExtra("stepsCount", stepsData?.count ?: 0L)
+                putExtra("sleepDurationMillis", sleepDuration ?: 0L)
+                putExtra("sleepQuality", sleepQuality ?: "Indefinido")
+                putExtra("caloriesBurned", caloriesBurned ?: 0.0)
+                // Enviar lista como ArrayList, que é serializável
+                putExtra("exercisesData", ArrayList(exerciseData ?: emptyList()))
+            }
+            context.startActivity(intent)
+        }) {
+            Text("Ir para DeepSeek")
+        }
 
         DashboardScreenContent(
             steps = stepsData?.count,

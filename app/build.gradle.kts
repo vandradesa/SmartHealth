@@ -1,6 +1,10 @@
+import java.util.Properties
+
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("kotlin-parcelize")
 }
 
 android {
@@ -13,6 +17,14 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
+        val localProperties = Properties()
+        val localPropertiesFile = rootProject.file("local.properties")
+        if (localPropertiesFile.exists()) {
+            localProperties.load(localPropertiesFile.inputStream())
+        }
+        val apiKey = localProperties.getProperty("API_KEY") ?: ""
+        buildConfigField("String", "API_KEY", "\"$apiKey\"")
+
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -41,9 +53,11 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
+
     }
 
-    composeOptions {
+  composeOptions {
         kotlinCompilerExtensionVersion = "1.5.3"
     }
 
@@ -62,6 +76,11 @@ dependencies {
     implementation("androidx.health.connect:connect-client:1.1.0-beta01")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("com.jakewharton.timber:timber:5.0.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+
+    //Retrofit
+    implementation ("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation ("com.squareup.retrofit2:converter-gson:2.9.0")
 
     // Compose
     implementation(platform("androidx.compose:compose-bom:2024.04.00"))

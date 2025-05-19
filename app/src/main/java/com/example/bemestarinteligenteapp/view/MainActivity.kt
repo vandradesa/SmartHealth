@@ -2,14 +2,15 @@ package com.example.bemestarinteligenteapp.view
 
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.ViewModelProvider
+import kotlinx.coroutines.launch
+import android.widget.Toast
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
@@ -28,9 +29,8 @@ import com.example.bemestarinteligenteapp.viewmodel.sleep.SleepViewModel
 import com.example.bemestarinteligenteapp.viewmodel.sleep.SleepViewModelFactory
 import com.example.bemestarinteligenteapp.viewmodel.steps.StepsViewModel
 import com.example.bemestarinteligenteapp.viewmodel.steps.StepsViewModelFactory
-import kotlinx.coroutines.launch
 
-// Definindo as permissões necessárias para acessar os dados de saúde
+// Permissões necessárias para acessar os dados de saúde
 private val permissions = setOf(
     HealthPermission.getReadPermission(HeartRateRecord::class),
     HealthPermission.getReadPermission(StepsRecord::class),
@@ -40,12 +40,11 @@ private val permissions = setOf(
     HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
     HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
     HealthPermission.getReadPermission(ExerciseSessionRecord::class)
-
 )
 
 class MainActivity : ComponentActivity() {
 
-    // Declaração dos ViewModels
+    // ViewModels
     private lateinit var stepsViewModel: StepsViewModel
     private lateinit var heartRateViewModel: HeartRateViewModel
     private lateinit var oxygenSaturationViewModel: OxygenSaturationViewModel
@@ -53,67 +52,51 @@ class MainActivity : ComponentActivity() {
     private lateinit var caloriesViewModel: CaloriesViewModel
     private lateinit var exercisesViewModel: ExercisesViewModel
 
-
-    // Inicialização do HealthConnectClient
+    // HealthConnect Client
     private lateinit var healthConnectClient: HealthConnectClient
-
-    // Registro da solicitação de permissões
-    private val requestPermissions = registerForActivityResult(
-        PermissionController.createRequestPermissionResultContract()
-    ) { granted ->
-        // Caso as permissões sejam concedidas, carregamos os dados
-        if (granted.containsAll(permissions)) {
-            lifecycleScope.launch {
-                healthConnectClient = HealthConnectClient.getOrCreate(this@MainActivity)
-                stepsViewModel.loadSteps(healthConnectClient) // Carrega os dados de passos
-                heartRateViewModel.loadHeartRate(healthConnectClient) // Carrega os dados de frequência cardíaca
-                oxygenSaturationViewModel.loadOxygenSaturation(healthConnectClient)
-                sleepViewModel.loadSleepData(healthConnectClient)
-                caloriesViewModel.loadCalories(healthConnectClient)
-                exercisesViewModel.loadExercises(healthConnectClient)
-            }
-        } else {
-            // Caso não tenha permissões, mostramos um aviso ao usuário
-            Toast.makeText(
-                this,
-                "Permissões não concedidas. O app precisa delas para funcionar corretamente.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Instanciando ViewModel com o repositório
-        //val repository = HealthDataRepositoryImpl()
-        //steps
-        // Inicializando os ViewModels com suas respectivas fábricas
-        val stepsFactory = StepsViewModelFactory(applicationContext)
-        stepsViewModel = ViewModelProvider(this, stepsFactory)[StepsViewModel::class.java]
-
-        //heartRate
-        val heartRateFactory = HeartRateViewModelFactory(applicationContext)
-        heartRateViewModel = ViewModelProvider(this, heartRateFactory)[HeartRateViewModel::class.java]
-
-        //oxygenSaturation
-        val oxygenSaturationFactory = OxygenSaturationViewModelFactory(applicationContext)
-        oxygenSaturationViewModel = ViewModelProvider(this, oxygenSaturationFactory)[OxygenSaturationViewModel::class.java]
-
-        val sleepFactory = SleepViewModelFactory(applicationContext)
-        sleepViewModel = ViewModelProvider(this, sleepFactory)[SleepViewModel::class.java]
-
-        val caloriesFactory = CaloriesViewModelFactory(applicationContext)
-        caloriesViewModel = ViewModelProvider(this, caloriesFactory)[CaloriesViewModel::class.java]
-
-        val exercisesFactory = ExercisesViewModelFactory(applicationContext)
-        exercisesViewModel = ViewModelProvider(this, exercisesFactory)[ExercisesViewModel::class.java]
+        // Inicializando ViewModels
+        stepsViewModel = ViewModelProvider(this, StepsViewModelFactory(applicationContext))[StepsViewModel::class.java]
+        heartRateViewModel = ViewModelProvider(this, HeartRateViewModelFactory(applicationContext))[HeartRateViewModel::class.java]
+        oxygenSaturationViewModel = ViewModelProvider(this, OxygenSaturationViewModelFactory(applicationContext))[OxygenSaturationViewModel::class.java]
+        sleepViewModel = ViewModelProvider(this, SleepViewModelFactory(applicationContext))[SleepViewModel::class.java]
+        caloriesViewModel = ViewModelProvider(this, CaloriesViewModelFactory(applicationContext))[CaloriesViewModel::class.java]
+        exercisesViewModel = ViewModelProvider(this, ExercisesViewModelFactory(applicationContext))[ExercisesViewModel::class.java]
 
         lifecycleScope.launch {
-            // Verificando o status do SDK do Health Connect
-            val providerPackageName = "com.google.android.apps.healthdata"
-            val availability = HealthConnectClient.getSdkStatus(this@MainActivity, providerPackageName)
-            if (availability == HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED) {
+            verificarSdkEPermissoes()
+        }
+
+        // Definindo a UI com Jetpack Compose
+        setContent {
+            BemEstarInteligenteAppTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    DashboardScreen(
+                        stepsViewModel = stepsViewModel,
+                        heartRateViewModel = heartRateViewModel,
+                        oxygenSaturationViewModel = oxygenSaturationViewModel,
+                        sleepViewModel = sleepViewModel,
+                        caloriesViewModel = caloriesViewModel,
+                        exercisesViewModel = exercisesViewModel
+                    )
+                }
+            }
+        }
+    }
+
+    private suspend fun verificarSdkEPermissoes() {
+        val providerPackageName = "com.google.android.apps.healthdata"
+        val availability = HealthConnectClient.getSdkStatus(this, providerPackageName)
+
+        // Se o SDK precisar de atualização, tente abrir a Play Store
+        if (availability == HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED) {
+            try {
                 val uri = "market://details?id=$providerPackageName&url=healthconnect%3A%2F%2Fonboarding"
                 startActivity(Intent(Intent.ACTION_VIEW).apply {
                     setPackage("com.android.vending")
@@ -121,53 +104,49 @@ class MainActivity : ComponentActivity() {
                     putExtra("overlay", true)
                     putExtra("callerId", packageName)
                 })
-                return@launch
+            } catch (e: Exception) {
+                Toast.makeText(this, "Erro ao abrir a Play Store: ${e.message}", Toast.LENGTH_LONG).show()
             }
-
-            // Inicializa o cliente de dados de saúde do Health Connect
-            healthConnectClient = HealthConnectClient.getOrCreate(this@MainActivity)
-            val permissionController = healthConnectClient.permissionController
-
-            // Verificando se as permissões necessárias já foram concedidas
-            val granted = permissionController.getGrantedPermissions()
-
-            // Caso as permissões já tenham sido concedidas, carregamos os dados
-            if (granted.containsAll(permissions)) {
-                stepsViewModel.loadSteps(healthConnectClient)
-                heartRateViewModel.loadHeartRate(healthConnectClient)
-                oxygenSaturationViewModel.loadOxygenSaturation(healthConnectClient)
-                sleepViewModel.loadSleepData(healthConnectClient)
-                caloriesViewModel.loadCalories(healthConnectClient)
-                exercisesViewModel.loadExercises(healthConnectClient)
-            } else {
-                // Caso as permissões ainda não tenham sido concedidas, solicitamos ao usuário
-                requestPermissions.launch(permissions)
-            }
+            return
         }
 
-        // Definindo o conteúdo da tela com Jetpack Compose
-        setContent {
-            BemEstarInteligenteAppTheme {
-                // Layout da tela principal
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    // Passando os ViewModels para a tela de Dashboard
-                    DashboardScreen(
-                        stepsViewModel    = stepsViewModel,
-                        heartRateViewModel = heartRateViewModel,
-                        oxygenSaturationViewModel = oxygenSaturationViewModel,
-                        sleepViewModel = sleepViewModel,
-                        caloriesViewModel = caloriesViewModel,
-                        exercisesViewModel = exercisesViewModel
-                    )
-                    //StepsScreen(healthConnectClient = healthConnectClient)  // Passando explicitamente o healthConnectClient
+        // Inicializa o cliente de dados de saúde
+        healthConnectClient = HealthConnectClient.getOrCreate(this)
+        val permissionController = healthConnectClient.permissionController
+        val granted = permissionController.getGrantedPermissions()
 
+        // Solicita permissões caso ainda não tenham sido concedidas
+        if (!granted.containsAll(permissions)) {
+            requestPermissions.launch(permissions)
+        } else {
+            carregarDados()
+        }
+    }
 
+    // Método para carregar os dados das ViewModels
+    private fun carregarDados() {
+        lifecycleScope.launch {
+            stepsViewModel.loadSteps(healthConnectClient)
+            heartRateViewModel.loadHeartRate(healthConnectClient)
+            oxygenSaturationViewModel.loadOxygenSaturation(healthConnectClient)
+            sleepViewModel.loadSleepData(healthConnectClient)
+            caloriesViewModel.loadCalories(healthConnectClient)
+            exercisesViewModel.loadExercises(healthConnectClient)
+        }
+    }
 
-                }
-            }
+    // Registro da solicitação de permissões
+    private val requestPermissions = registerForActivityResult(
+        PermissionController.createRequestPermissionResultContract()
+    ) { granted ->
+        if (granted.containsAll(permissions)) {
+            carregarDados()
+        } else {
+            Toast.makeText(
+                this,
+                "Permissões não concedidas. O app precisa delas para funcionar corretamente.",
+                Toast.LENGTH_LONG
+            ).show()
         }
     }
 }
