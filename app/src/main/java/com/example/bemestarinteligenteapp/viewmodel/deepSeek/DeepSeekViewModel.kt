@@ -1,4 +1,4 @@
-package com.example.bemestarinteligenteapp.viewmodel
+package com.example.bemestarinteligenteapp.viewmodel.deepSeek
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -6,8 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bemestarinteligenteapp.repository.DeepSeekRepository
 import kotlinx.coroutines.launch
-
-
 
 class DeepSeekViewModel(private val repository: DeepSeekRepository) : ViewModel() {
 

@@ -18,7 +18,7 @@ import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
     primary = Blue80, // Geralmente cores mais claras/vibrantes para dark mode
-    secondary = PurpleGrey80,
+    secondary = Color(0xFF000000),
     tertiary = Pink80,
 
     background = Color(0xFF121212), // Fundo bem escuro
@@ -26,24 +26,26 @@ private val DarkColorScheme = darkColorScheme(
     surfaceVariant = Color(0xFF2C2C2C), // Variação de superfície
 
     onPrimary = Color(0xFFFFFFFF),  // Cor para texto/ícones sobre a cor primária
-    onSecondary = Color(0xFF003847),
+    onSecondary = Color(0xFFFFFFFF),
     onTertiary = Color(0xFF003847),
 
     onBackground = Color(0xFFE0E0E0),   // Texto CLARO sobre fundo escuro
     onSurface = Color(0xFFFFFFFF),     // Texto CLARO sobre superfícies escuras
-    onSurfaceVariant = Color(0xFFFFFFFF) // Texto CLARO (um pouco menos enfático) sobre superfícies
+    onSurfaceVariant = Color(0xFFFFFFFF), // Texto CLARO (um pouco menos enfático) sobre superfícies
+
 )
 
 private val LightColorScheme = lightColorScheme(
     primary = Blue40,
-    secondary = PurpleGrey40,
+    secondary = Color(0xFFFFFFFF),
     tertiary = Pink40,
     background = Color(0xFFFFFFFF),
     surface = Color(0xFF004E5A),
     onBackground = Color(0xFF000000),
     onSurface = Color(0xFFFFFFFF),
     onSurfaceVariant = Color(0xFF004E5A),
-    onPrimary = Color(0xFFFFFFFF)
+    onPrimary = Color(0xFFFFFFFF),
+    onSecondary = Color(0xFF000000),
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),

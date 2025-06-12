@@ -1,4 +1,4 @@
-package com.example.bemestarinteligenteapp.viewmodel
+package com.example.bemestarinteligenteapp.viewmodel.deepSeek
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

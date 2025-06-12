@@ -1,4 +1,4 @@
-package com.example.bemestarinteligenteapp.viewmodel
+package com.example.bemestarinteligenteapp.viewmodel.user
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -9,7 +9,7 @@ import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch // Para viewModelScope.launch sem await
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class LoginViewModel : ViewModel() {
@@ -117,4 +117,3 @@ class LoginViewModel : ViewModel() {
 
 
 }
-

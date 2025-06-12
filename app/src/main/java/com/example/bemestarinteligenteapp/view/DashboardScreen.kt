@@ -446,8 +446,7 @@ fun DashboardScreen(
                             icon = Icons.Default.Person,
                             text = "Editar Dados",
                             onClick = {
-                                // TODO: Navegar para a tela de Edição de Dados
-                                // Ex: navController.navigate("edit_profile_route")
+                                navController.navigate("edit")
                             }
                         )
                         Divider(modifier = Modifier.padding(horizontal = 16.dp))
@@ -455,8 +454,7 @@ fun DashboardScreen(
                             icon = Icons.Default.Lock,
                             text = "Alterar Senha",
                             onClick = {
-                                // TODO: Navegar para a tela de Alteração de Senha
-                                // Ex: navController.navigate("change_password_route")
+                                navController.navigate("change_password")
                             }
                         )
 

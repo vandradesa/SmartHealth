@@ -46,7 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel // Para injetar ViewModel
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import com.example.bemestarinteligenteapp.R
 import com.example.bemestarinteligenteapp.ui.theme.InputBackground
-import com.example.bemestarinteligenteapp.viewmodel.SignUpViewModel // Importe seu ViewModel
+import com.example.bemestarinteligenteapp.viewmodel.user.SignUpViewModel // Importe seu ViewModel
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

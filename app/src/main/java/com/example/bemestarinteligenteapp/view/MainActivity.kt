@@ -39,13 +39,17 @@ import com.example.bemestarinteligenteapp.view.calories.CaloriesWeeklyChartView
 import com.example.bemestarinteligenteapp.view.heartrate.HeartRateWeeklyChartView
 import com.example.bemestarinteligenteapp.view.oxygen.OxygenSaturationWeeklyChartView
 import com.example.bemestarinteligenteapp.view.steps.StepsWeeklyChartView
-import com.example.bemestarinteligenteapp.viewmodel.LoginViewModel
+import com.example.bemestarinteligenteapp.viewmodel.user.EditViewModel
+import com.example.bemestarinteligenteapp.viewmodel.user.LoginViewModel
 import kotlinx.coroutines.launch
 
 object AppDestinations {
+    const val HOME_ROUTE = "home"
     const val LOGIN_ROUTE = "login"
     const val DASHBOARD_ROUTE = "dashboard"
     const val SIGNUP_ROUTE = "signup"
+    const val EDIT_ROUTE = "edit"
+    const val CHANGE_PASSWORD_ROUTE = "change_password"
     const val STEPS_WEEKLY_ANALYSIS_ROUTE = "steps_weekly_analysis"
     const val CALORIES_WEEKLY_ANALYSIS_ROUTE = "calories_weekly_analysis"
     const val HEART_RATE_WEEKLY_ANALYSIS_ROUTE = "heart_rate_weekly_analysis"
@@ -88,7 +92,7 @@ class MainActivity : ComponentActivity() {
 fun AppNavigation(isUserLoggedIn: Boolean) {
     val navController = rememberNavController()
     // Define a tela inicial baseada no estado de login do usuário
-    val startDestination = if (isUserLoggedIn) AppDestinations.DASHBOARD_ROUTE else AppDestinations.LOGIN_ROUTE
+    val startDestination = if (isUserLoggedIn) AppDestinations.DASHBOARD_ROUTE else AppDestinations.HOME_ROUTE
 
     NavHost(
         navController = navController,
@@ -227,22 +231,35 @@ fun AppNavigation(isUserLoggedIn: Boolean) {
         }
 
         composable(AppDestinations.SIGNUP_ROUTE) {
-            // Aqui você chama sua tela de cadastro
             SignUpScreen(navController = navController)
         }
-        // Exemplo de outras rotas que você pode adicionar no futuro:
-        // composable("SUA_ROTA_CADASTRO") { SuaTelaDeCadastro(navController) }
-        // composable("SUA_ROTA_ESQUECI_SENHA") { SuaTelaEsqueciSenha(navController) }
+
+        composable(AppDestinations.HOME_ROUTE) {
+            WelcomeScreen(navController = navController)
+        }
+
+        composable(AppDestinations.EDIT_ROUTE) {
+            val editViewModel: EditViewModel = viewModel()
+
+            EditScreen(
+                navController = navController,
+                editViewModel = editViewModel // Passa a instância gerenciada
+            )
+
+        }
+
+        composable(AppDestinations.CHANGE_PASSWORD_ROUTE) {
+            ChangePasswordScreen(navController = navController)
+        }
+
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun DefaultPreview() { // maPreview para a MainActivity e AppNavigation
+fun DefaultPreview() {
     BemEstarInteligenteAppTheme {
-        // No preview, podemos simular os dois cenários de startDestination
-        // AppNavigation(isUserLoggedIn = false) // Simula usuário não logado
-        AppNavigation(isUserLoggedIn = true)  // Simula usuário logado
+             AppNavigation(isUserLoggedIn = true)  // Simula usuário logado
     }
 }
 }

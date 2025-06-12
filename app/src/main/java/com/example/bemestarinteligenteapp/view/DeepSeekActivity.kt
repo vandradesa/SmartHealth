@@ -20,8 +20,8 @@ import com.example.bemestarinteligenteapp.model.ExercisesData
 import com.example.bemestarinteligenteapp.remote.RetrofitClient
 import com.example.bemestarinteligenteapp.repository.DeepSeekRepository
 
-import com.example.bemestarinteligenteapp.viewmodel.DeepSeekViewModel
-import com.example.bemestarinteligenteapp.viewmodel.DeepSeekViewModelFactory
+import com.example.bemestarinteligenteapp.viewmodel.deepSeek.DeepSeekViewModel
+import com.example.bemestarinteligenteapp.viewmodel.deepSeek.DeepSeekViewModelFactory
 
 class DeepSeekActivity : ComponentActivity() {
     private lateinit var viewModel: DeepSeekViewModel

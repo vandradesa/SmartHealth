@@ -35,7 +35,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController // << NOVO: Importar NavController
 import com.example.bemestarinteligenteapp.ui.theme.InputBackground
-import com.example.bemestarinteligenteapp.viewmodel.LoginViewModel
+import com.example.bemestarinteligenteapp.viewmodel.user.LoginViewModel
 
 import kotlinx.coroutines.launch
 
