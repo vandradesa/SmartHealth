@@ -1,152 +1,248 @@
 package com.example.bemestarinteligenteapp.view
 
-import android.content.Intent
+import android.app.Application // Para passar ao ViewModelFactory
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.ViewModelProvider
-import kotlinx.coroutines.launch
-import android.widget.Toast
-import androidx.health.connect.client.HealthConnectClient
-import androidx.health.connect.client.PermissionController
-import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.*
-import androidx.core.net.toUri
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import com.example.bemestarinteligenteapp.ui.theme.BemEstarInteligenteAppTheme
-import com.example.bemestarinteligenteapp.viewmodel.calories.CaloriesViewModel
 import com.example.bemestarinteligenteapp.viewmodel.calories.CaloriesViewModelFactory
-import com.example.bemestarinteligenteapp.viewmodel.exercise.ExercisesViewModel
 import com.example.bemestarinteligenteapp.viewmodel.exercise.ExercisesViewModelFactory
-import com.example.bemestarinteligenteapp.viewmodel.heartRate.HeartRateViewModel
 import com.example.bemestarinteligenteapp.viewmodel.heartRate.HeartRateViewModelFactory
-import com.example.bemestarinteligenteapp.viewmodel.oxygenSaturation.OxygenSaturationViewModel
 import com.example.bemestarinteligenteapp.viewmodel.oxygenSaturation.OxygenSaturationViewModelFactory
-import com.example.bemestarinteligenteapp.viewmodel.sleep.SleepViewModel
 import com.example.bemestarinteligenteapp.viewmodel.sleep.SleepViewModelFactory
-import com.example.bemestarinteligenteapp.viewmodel.steps.StepsViewModel
 import com.example.bemestarinteligenteapp.viewmodel.steps.StepsViewModelFactory
+import com.google.firebase.auth.FirebaseAuth // Importe FirebaseAuth
+import com.google.firebase.auth.ktx.auth // Importe auth se não estiver global
+import com.google.firebase.ktx.Firebase // Importe Firebase se não estiver global
+import androidx.compose.ui.platform.LocalContext // Para obter o contexto da aplicação para as factories
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel // Import para o delegate viewModel()
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.example.bemestarinteligenteapp.view.calories.CaloriesWeeklyChartView
+import com.example.bemestarinteligenteapp.view.heartrate.HeartRateWeeklyChartView
+import com.example.bemestarinteligenteapp.view.oxygen.OxygenSaturationWeeklyChartView
+import com.example.bemestarinteligenteapp.view.steps.StepsWeeklyChartView
+import com.example.bemestarinteligenteapp.viewmodel.LoginViewModel
+import kotlinx.coroutines.launch
 
-// Permissões necessárias para acessar os dados de saúde
-private val permissions = setOf(
-    HealthPermission.getReadPermission(HeartRateRecord::class),
-    HealthPermission.getReadPermission(StepsRecord::class),
-    HealthPermission.getReadPermission(SleepSessionRecord::class),
-    HealthPermission.getReadPermission(OxygenSaturationRecord::class),
-    HealthPermission.getReadPermission(DistanceRecord::class),
-    HealthPermission.getReadPermission(TotalCaloriesBurnedRecord::class),
-    HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
-    HealthPermission.getReadPermission(ExerciseSessionRecord::class)
-)
+object AppDestinations {
+    const val LOGIN_ROUTE = "login"
+    const val DASHBOARD_ROUTE = "dashboard"
+    const val SIGNUP_ROUTE = "signup"
+    const val STEPS_WEEKLY_ANALYSIS_ROUTE = "steps_weekly_analysis"
+    const val CALORIES_WEEKLY_ANALYSIS_ROUTE = "calories_weekly_analysis"
+    const val HEART_RATE_WEEKLY_ANALYSIS_ROUTE = "heart_rate_weekly_analysis"
+    const val SLEEP_WEEKLY_ANALYSIS_ROUTE = "sleep_weekly_analysis"
+    const val OXYGEN_WEEKLY_ANALYSIS_ROUTE = "distance_weekly_analysis"
+    const val EXERCISES_WEEKLY_ANALYSIS_ROUTE = "active_minutes_weekly_analysis"
+
+
+    // Adicione outras rotas como SIGNUP_ROUTE, FORGOT_PASSWORD_ROUTE aqui
+}
 
 class MainActivity : ComponentActivity() {
 
-    // ViewModels
-    private lateinit var stepsViewModel: StepsViewModel
-    private lateinit var heartRateViewModel: HeartRateViewModel
-    private lateinit var oxygenSaturationViewModel: OxygenSaturationViewModel
-    private lateinit var sleepViewModel: SleepViewModel
-    private lateinit var caloriesViewModel: CaloriesViewModel
-    private lateinit var exercisesViewModel: ExercisesViewModel
-
-    // HealthConnect Client
-    private lateinit var healthConnectClient: HealthConnectClient
+    private lateinit var auth: FirebaseAuth
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        auth = Firebase.auth
+        Log.i("MainActivity", "onCreate usuario atual: ${auth.currentUser}")
 
-        // Inicializando ViewModels
-        stepsViewModel = ViewModelProvider(this, StepsViewModelFactory(applicationContext))[StepsViewModel::class.java]
-        heartRateViewModel = ViewModelProvider(this, HeartRateViewModelFactory(applicationContext))[HeartRateViewModel::class.java]
-        oxygenSaturationViewModel = ViewModelProvider(this, OxygenSaturationViewModelFactory(applicationContext))[OxygenSaturationViewModel::class.java]
-        sleepViewModel = ViewModelProvider(this, SleepViewModelFactory(applicationContext))[SleepViewModel::class.java]
-        caloriesViewModel = ViewModelProvider(this, CaloriesViewModelFactory(applicationContext))[CaloriesViewModel::class.java]
-        exercisesViewModel = ViewModelProvider(this, ExercisesViewModelFactory(applicationContext))[ExercisesViewModel::class.java]
-
-        lifecycleScope.launch {
-            verificarSdkEPermissoes()
-        }
-
-        // Definindo a UI com Jetpack Compose
-        setContent {
-            BemEstarInteligenteAppTheme {
+         setContent {
+            BemEstarInteligenteAppTheme(
+                darkTheme = isSystemInDarkTheme(), // Você pode manter ou remover se não for usar tema escuro dinâmico
+                dynamicColor = false // <<<<<<< ADICIONE ESTA LINHA
+            ) { // Seu tema
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    DashboardScreen(
-                        stepsViewModel = stepsViewModel,
-                        heartRateViewModel = heartRateViewModel,
-                        oxygenSaturationViewModel = oxygenSaturationViewModel,
-                        sleepViewModel = sleepViewModel,
-                        caloriesViewModel = caloriesViewModel,
-                        exercisesViewModel = exercisesViewModel
-                    )
+                    // Chama o Composable de Navegação, passando o estado de login atual
+                    AppNavigation(isUserLoggedIn = auth.currentUser != null)
                 }
             }
         }
     }
 
-    private suspend fun verificarSdkEPermissoes() {
-        val providerPackageName = "com.google.android.apps.healthdata"
-        val availability = HealthConnectClient.getSdkStatus(this, providerPackageName)
 
-        // Se o SDK precisar de atualização, tente abrir a Play Store
-        if (availability == HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED) {
-            try {
-                val uri = "market://details?id=$providerPackageName&url=healthconnect%3A%2F%2Fonboarding"
-                startActivity(Intent(Intent.ACTION_VIEW).apply {
-                    setPackage("com.android.vending")
-                    data = uri.toUri()
-                    putExtra("overlay", true)
-                    putExtra("callerId", packageName)
-                })
-            } catch (e: Exception) {
-                Toast.makeText(this, "Erro ao abrir a Play Store: ${e.message}", Toast.LENGTH_LONG).show()
+
+@Composable
+fun AppNavigation(isUserLoggedIn: Boolean) {
+    val navController = rememberNavController()
+    // Define a tela inicial baseada no estado de login do usuário
+    val startDestination = if (isUserLoggedIn) AppDestinations.DASHBOARD_ROUTE else AppDestinations.LOGIN_ROUTE
+
+    NavHost(
+        navController = navController,
+        startDestination = startDestination
+    ) {
+        composable(AppDestinations.CALORIES_WEEKLY_ANALYSIS_ROUTE) {
+            CaloriesWeeklyChartView() // Este Composable busca seu próprio ViewModel
+        }
+        composable(AppDestinations.HEART_RATE_WEEKLY_ANALYSIS_ROUTE) {
+            HeartRateWeeklyChartView() // Este Composable busca seu próprio ViewModel
+        }
+        composable(AppDestinations.SLEEP_WEEKLY_ANALYSIS_ROUTE) {
+            CaloriesWeeklyChartView() // Este Composable busca seu próprio ViewModel
+        }
+        composable(AppDestinations.OXYGEN_WEEKLY_ANALYSIS_ROUTE) {
+            OxygenSaturationWeeklyChartView() // Este Composable busca seu próprio ViewModel
+        }
+
+        composable(AppDestinations.EXERCISES_WEEKLY_ANALYSIS_ROUTE) {
+            CaloriesWeeklyChartView() // Este Composable busca seu próprio ViewModel
+        }
+
+        composable(AppDestinations.STEPS_WEEKLY_ANALYSIS_ROUTE) {
+            StepsWeeklyChartView() // Este Composable busca seu próprio ViewModel
+        }
+
+        composable(
+            // <<< MUDANÇA 1: Adicionar o argumento opcional à rota
+            route = "${AppDestinations.LOGIN_ROUTE}?showSuccess={showSuccess}",
+            arguments = listOf(
+                navArgument("showSuccess") {
+                    type = NavType.BoolType
+                    defaultValue = false // Valor padrão é falso
+                }
+            )
+        ) { backStackEntry -> // <<< MUDANÇA 2: Receber o backStackEntry para ler o argumento
+
+            val loginViewModel: LoginViewModel = viewModel()
+            var showForgotPasswordDialog by remember { mutableStateOf(false) }
+            val snackbarHostState = remember { SnackbarHostState() }
+            val scope = rememberCoroutineScope()
+
+            // <<< MUDANÇA 3: Adicionar o LaunchedEffect para mostrar a mensagem
+            // Pega o argumento da navegação
+            val showSuccessMessage = backStackEntry.arguments?.getBoolean("showSuccess") ?: false
+            if (showSuccessMessage) {
+                // Este efeito será lançado apenas uma vez quando a tela for exibida com este argumento
+                LaunchedEffect(Unit) {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = "Cadastro realizado com sucesso!",
+                            duration = SnackbarDuration.Short
+                        )
+                    }
+                }
             }
-            return
+            SmartHealthLoginScreenLight(
+                navController = navController,
+                onForgotPasswordClicked = {
+                    Log.d("AppNavigation", "Forgot Password Clicado - Implementar navegação")
+                    showForgotPasswordDialog = true
+                },
+                onSignUpClicked = {
+                    Log.d("AppNavigation", "Sign Up Clicado - Implementar navegação ou lógica de cadastro")
+                    navController.navigate(AppDestinations.SIGNUP_ROUTE)
+                },
+                loginViewModel = loginViewModel,
+                snackbarHostState = snackbarHostState,
+                showSuccessMessage = showSuccessMessage
+            )
+            // Se showForgotPasswordDialog for true, mostre o diálogo
+            if (showForgotPasswordDialog) {
+                ForgotPasswordDialog( // O diálogo que você criou na Parte 2
+                    onDismissRequest = {
+                        showForgotPasswordDialog = false // Fecha o diálogo
+                        // Chama a função para limpar o status/erro no ViewModel
+                        loginViewModel.clearPasswordResetStatus() // Certifique-se que esta função existe no LoginViewModel
+                    },
+                    onSendEmailClicked = { email ->
+                        Log.d("AppNavigation", "Dialog: Enviar e-mail de reset para: $email")
+                        // Chama a função sendPasswordResetEmail do LoginViewModel
+                        loginViewModel.sendPasswordResetEmail(email)
+                        showForgotPasswordDialog = false // Fecha o diálogo
+                        // O feedback (Snackbar) será tratado na Parte 4
+                    }
+                )
+            }
+
+            val isLoadingResetPassword by loginViewModel.isLoadingResetPassword.collectAsState()
+            val passwordResetStatus by loginViewModel.passwordResetEmailSentStatus.collectAsState()
+            val passwordResetError by loginViewModel.passwordResetError.collectAsState()
+
+// Efeito para mostrar Snackbar de SUCESSO na redefinição de senha
+            LaunchedEffect(passwordResetStatus) {
+                if (passwordResetStatus == true) { // Se o envio foi bem-sucedido
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = "E-mail de redefinição enviado! Verifique sua caixa de entrada (e spam).",
+                            duration = SnackbarDuration.Long
+                        )
+                    }
+                    loginViewModel.clearPasswordResetStatus() // Limpa o evento/status no ViewModel
+                }
+            }
+
+// Efeito para mostrar Snackbar de ERRO na redefinição de senha
+            LaunchedEffect(passwordResetError) {
+                passwordResetError?.let { errorMsg ->
+                    scope.launch {
+                        snackbarHostState.showSnackbar(
+                            message = errorMsg, // Mensagem de erro vinda do ViewModel
+                            duration = SnackbarDuration.Long
+                        )
+                    }
+                    loginViewModel.clearPasswordResetStatus() // Limpa o evento/status no ViewModel
+                }
+            }
+
+
         }
 
-        // Inicializa o cliente de dados de saúde
-        healthConnectClient = HealthConnectClient.getOrCreate(this)
-        val permissionController = healthConnectClient.permissionController
-        val granted = permissionController.getGrantedPermissions()
+        composable(AppDestinations.DASHBOARD_ROUTE) {
+            // Obtendo o contexto da aplicação para as Factories dos ViewModels
+            val application = LocalContext.current.applicationContext as Application
 
-        // Solicita permissões caso ainda não tenham sido concedidas
-        if (!granted.containsAll(permissions)) {
-            requestPermissions.launch(permissions)
-        } else {
-            carregarDados()
+            // Sua DashboardScreen atualizada para receber NavController e instanciando ViewModels
+            DashboardScreen(
+                navController = navController,
+                stepsViewModel = viewModel(factory = StepsViewModelFactory(application)),
+                heartRateViewModel = viewModel(factory = HeartRateViewModelFactory(application)),
+                oxygenSaturationViewModel = viewModel(factory = OxygenSaturationViewModelFactory(application)),
+                sleepViewModel = viewModel(factory = SleepViewModelFactory(application)),
+                caloriesViewModel = viewModel(factory = CaloriesViewModelFactory(application)),
+                exercisesViewModel = viewModel(factory = ExercisesViewModelFactory(application))
+            )
         }
+
+        composable(AppDestinations.SIGNUP_ROUTE) {
+            // Aqui você chama sua tela de cadastro
+            SignUpScreen(navController = navController)
+        }
+        // Exemplo de outras rotas que você pode adicionar no futuro:
+        // composable("SUA_ROTA_CADASTRO") { SuaTelaDeCadastro(navController) }
+        // composable("SUA_ROTA_ESQUECI_SENHA") { SuaTelaEsqueciSenha(navController) }
     }
+}
 
-    // Método para carregar os dados das ViewModels
-    private fun carregarDados() {
-        lifecycleScope.launch {
-            stepsViewModel.loadSteps(healthConnectClient)
-            heartRateViewModel.loadHeartRate(healthConnectClient)
-            oxygenSaturationViewModel.loadOxygenSaturation(healthConnectClient)
-            sleepViewModel.loadSleepData(healthConnectClient)
-            caloriesViewModel.loadCalories(healthConnectClient)
-            exercisesViewModel.loadExercises(healthConnectClient)
-        }
+@Preview(showBackground = true)
+@Composable
+fun DefaultPreview() { // maPreview para a MainActivity e AppNavigation
+    BemEstarInteligenteAppTheme {
+        // No preview, podemos simular os dois cenários de startDestination
+        // AppNavigation(isUserLoggedIn = false) // Simula usuário não logado
+        AppNavigation(isUserLoggedIn = true)  // Simula usuário logado
     }
-
-    // Registro da solicitação de permissões
-    private val requestPermissions = registerForActivityResult(
-        PermissionController.createRequestPermissionResultContract()
-    ) { granted ->
-        if (granted.containsAll(permissions)) {
-            carregarDados()
-        } else {
-            Toast.makeText(
-                this,
-                "Permissões não concedidas. O app precisa delas para funcionar corretamente.",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-    }
+}
 }

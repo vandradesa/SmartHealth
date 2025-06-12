@@ -9,11 +9,28 @@ import androidx.lifecycle.viewModelScope
 import com.example.bemestarinteligenteapp.model.HeartRateData
 import com.example.bemestarinteligenteapp.repository.HealthDataRepository
 import com.example.bemestarinteligenteapp.util.formatLocalDateTime
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.time.temporal.TemporalAdjusters
+import java.time.temporal.WeekFields
+import java.util.Locale
+
+data class HeartRateWeeklyChartData(
+    val dayLabels: List<String>,
+    val pastWeekAvgHeartRate: List<Double?>,  // <-- MUDANÇA AQUI
+    val currentWeekAvgHeartRate: List<Double?> // <-- E AQUI
+)
+
+fun Instant.formatLocalDateTime(pattern: String = "dd/MM/yyyy HH:mm:ss", zoneId: ZoneId = ZoneId.systemDefault()): String {
+    return DateTimeFormatter.ofPattern(pattern).withZone(zoneId).format(this)
+}
 
 class HeartRateViewModel(
     private val healthDataRepository: HealthDataRepository
@@ -21,7 +38,7 @@ class HeartRateViewModel(
 
     // LiveData para armazenar a lista de dados de frequência cardíaca
     private val _heartRateData = MutableLiveData<List<HeartRateData>?>()
-    val heartRateData: LiveData<List<HeartRateData>> get() = _heartRateData as LiveData<List<HeartRateData>>
+    val heartRateData: MutableLiveData<List<HeartRateData>?> get() = _heartRateData //as LiveData<List<HeartRateData>>
 
     // LiveData para armazenar o último valor de frequência cardíaca
     private val _latestHeartRate = MutableLiveData<Double?>()
@@ -34,6 +51,9 @@ class HeartRateViewModel(
     // LiveData: média de BPM do dia selecionado
     private val _averageHeartRate = MutableLiveData<Double?>()
     val averageHeartRate: LiveData<Double?> get() = _averageHeartRate
+
+    private val _weeklyChartData = MutableLiveData<HeartRateWeeklyChartData>()
+    val weeklyChartData: LiveData<HeartRateWeeklyChartData> get() = _weeklyChartData
 
     /**
      * Carrega os dados de frequência cardíaca para uma data específica (ou hoje, se date == null),
@@ -80,4 +100,72 @@ class HeartRateViewModel(
             }
         }
     }
+
+    fun loadWeeklyHeartRateData() {
+        viewModelScope.launch {
+            val today = LocalDate.now()
+            val locale = Locale.getDefault()
+            val firstDayOfWeek = WeekFields.of(locale).firstDayOfWeek
+
+            val startOfCurrentWeek = today.with(TemporalAdjusters.previousOrSame(firstDayOfWeek))
+            val startOfPastWeek = startOfCurrentWeek.minusWeeks(1)
+
+            val dayLabels = List(7) { i ->
+                firstDayOfWeek.plus(i.toLong()).getDisplayName(TextStyle.SHORT, locale)
+            }
+
+            val pastWeekDeferred = (0..6).map { dayIndex ->
+                async {
+                    val date = startOfPastWeek.plusDays(dayIndex.toLong())
+                    getAverageHeartRateForSingleDay(date)
+                }
+            }
+
+            val currentWeekDeferred = (0..6).map { dayIndex ->
+                async {
+                    val date = startOfCurrentWeek.plusDays(dayIndex.toLong())
+                    if (date.isAfter(today)) {
+                        null
+                    } else {
+                        getAverageHeartRateForSingleDay(date)
+                    }
+                }
+            }
+
+            val pastWeekResults = pastWeekDeferred.awaitAll()
+            val currentWeekResults = currentWeekDeferred.awaitAll()
+
+            val pastWeekAvgHr = pastWeekResults.map { dailyReadings ->
+                if (dailyReadings.isNullOrEmpty()) {
+                    null // Se não houver dados para o dia, a média é nula
+                } else {
+                    // Calcula a média de BPM para o dia
+                    dailyReadings.sumOf { it.bpm } / dailyReadings.size
+                }
+            }
+
+            val currentWeekAvgHr = currentWeekResults.map { dailyReadings ->
+                if (dailyReadings.isNullOrEmpty()) {
+                    null
+                } else {
+                    dailyReadings.sumOf { it.bpm } / dailyReadings.size
+                }
+            }
+
+            _weeklyChartData.value = HeartRateWeeklyChartData(
+                dayLabels = dayLabels,
+                pastWeekAvgHeartRate = pastWeekAvgHr,
+                currentWeekAvgHeartRate = currentWeekAvgHr
+            )
+        }
+    }
+
+    private suspend fun getAverageHeartRateForSingleDay(date: LocalDate): List<HeartRateData>? {
+        val startTime = date.atStartOfDay(ZoneId.systemDefault()).toInstant()
+        val endTime = date.plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant()
+        // Supondo que seu HealthDataRepository tenha este método
+        // O método pode retornar a média de BPM para o dia, ou você pode calcular aqui se ele retornar uma lista de leituras.
+        return healthDataRepository.getHeartRateData(startTime, endTime)// Exemplo
+    }
+
 }

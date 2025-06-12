@@ -10,21 +10,40 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
+    primary = Blue80, // Geralmente cores mais claras/vibrantes para dark mode
     secondary = PurpleGrey80,
-    tertiary = Pink80
+    tertiary = Pink80,
+
+    background = Color(0xFF121212), // Fundo bem escuro
+    surface = Color(0xFF004E5A),    // Superfície um pouco mais clara que o fundo
+    surfaceVariant = Color(0xFF2C2C2C), // Variação de superfície
+
+    onPrimary = Color(0xFFFFFFFF),  // Cor para texto/ícones sobre a cor primária
+    onSecondary = Color(0xFF003847),
+    onTertiary = Color(0xFF003847),
+
+    onBackground = Color(0xFFE0E0E0),   // Texto CLARO sobre fundo escuro
+    onSurface = Color(0xFFFFFFFF),     // Texto CLARO sobre superfícies escuras
+    onSurfaceVariant = Color(0xFFFFFFFF) // Texto CLARO (um pouco menos enfático) sobre superfícies
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
+    primary = Blue40,
     secondary = PurpleGrey40,
-    tertiary = Pink40
+    tertiary = Pink40,
+    background = Color(0xFFFFFFFF),
+    surface = Color(0xFF004E5A),
+    onBackground = Color(0xFF000000),
+    onSurface = Color(0xFFFFFFFF),
+    onSurfaceVariant = Color(0xFF004E5A),
+    onPrimary = Color(0xFFFFFFFF)
 
     /* Other default colors to override
     background = Color(0xFFFFFBFE),

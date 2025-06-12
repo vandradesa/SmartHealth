@@ -9,3 +9,15 @@ val Pink80 = Color(0xFFEFB8C8)
 val Purple40 = Color(0xFF6650a4)
 val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
+
+val Blue80 = Color(0xFF009382) //azul claro - tema escuro
+val Blue40 = Color(0xFF004E5A) //azul escuro - tema claro
+//val Blue40 = Color(0xFF003746) //azul escuro - tema claro
+
+val InputBackground = Color(0xFFF1F4FF)
+//val InputBackground = Color(0xFFE0E4F4)
+
+
+
+
+
