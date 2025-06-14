@@ -75,7 +75,7 @@ fun SummaryCard(
             Text(
                 title, fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurface,
+                color = MaterialTheme.colorScheme.onPrimary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -87,7 +87,7 @@ fun SummaryCard(
                         text = if (unit.isNotEmpty()) "$valueText $unit" else valueText,
                         fontSize = 20.sp,
                         fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -95,7 +95,7 @@ fun SummaryCard(
                     Text(
                         text = subtitle,
                         fontSize = 14.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -104,7 +104,7 @@ fun SummaryCard(
                     Text(
                         text = "Sem dados disponíveis",
                         fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = MaterialTheme.colorScheme.onPrimary,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -131,7 +131,7 @@ fun HeartRateSummaryCard(heartRate: Double?, measurementTime: Instant?, modifier
         title = "Frequência Cardíaca",
         valueText = heartRate?.let { "%.1f".format(it) },
         unit = "bpm",
-        subtitle = "última medição: " + measurementTime?.formatLocalDateTime() ?: "sem dados",
+        subtitle = "Última medição: " + measurementTime?.formatLocalDateTime() ?: "sem dados",
         modifier = modifier,
         onClick = onClick
     )

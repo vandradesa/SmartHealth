@@ -35,10 +35,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.bemestarinteligenteapp.remote.RetrofitClient
+import com.example.bemestarinteligenteapp.repository.DeepSeekRepository
 import com.example.bemestarinteligenteapp.view.calories.CaloriesWeeklyChartView
 import com.example.bemestarinteligenteapp.view.heartrate.HeartRateWeeklyChartView
 import com.example.bemestarinteligenteapp.view.oxygen.OxygenSaturationWeeklyChartView
 import com.example.bemestarinteligenteapp.view.steps.StepsWeeklyChartView
+import com.example.bemestarinteligenteapp.viewmodel.deepSeek.DeepSeekViewModelFactory
 import com.example.bemestarinteligenteapp.viewmodel.user.EditViewModel
 import com.example.bemestarinteligenteapp.viewmodel.user.LoginViewModel
 import kotlinx.coroutines.launch
@@ -250,6 +253,25 @@ fun AppNavigation(isUserLoggedIn: Boolean) {
 
         composable(AppDestinations.CHANGE_PASSWORD_ROUTE) {
             ChangePasswordScreen(navController = navController)
+        }
+
+        // No seu NavHost
+
+        composable(
+            route = "ai_report_route/{prompt}",
+            arguments = listOf(navArgument("prompt") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val prompt = backStackEntry.arguments?.getString("prompt") ?: ""
+
+            val repository = DeepSeekRepository(RetrofitClient.instance)
+            val factory = DeepSeekViewModelFactory(repository)
+
+            // 👇 Chamada para a tela com o nome correto
+            DeepSeekScreen(
+                navController = navController,
+                healthDataPrompt = prompt,
+                factory = factory
+            )
         }
 
     }

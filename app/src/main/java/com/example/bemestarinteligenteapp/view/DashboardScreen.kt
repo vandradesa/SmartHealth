@@ -81,6 +81,8 @@ import com.example.bemestarinteligenteapp.viewmodel.steps.StepsViewModel
 import com.example.bemestarinteligenteapp.viewmodel.steps.StepsViewModelFactory
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 import java.time.Instant
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -295,22 +297,28 @@ fun DashboardScreen(
                         onClick = {
                             // A LÓGICA DA IA É TRATADA DE FORMA ESPECIAL
                             if (item.title == "Relatório IA") {
-                                // A MESMA LÓGICA DO SEU BOTÃO ANTIGO
-                                val intent = Intent(context, DeepSeekActivity::class.java).apply {
-                                    putExtra("selectedDate", selectedDate.toString())
-                                    putExtra("heartRate", heartRateState ?: 0.0)
-                                    putExtra("averageHeartRate", averageBpmState ?: 0.0)
-                                    putExtra("oxygenSaturation", oxygenSaturationState ?: 0.0)
-                                    putExtra("stepsCount", stepsDataState?.count ?: 0L)
-                                    putExtra("sleepDurationMillis", sleepDurationState ?: 0L)
-                                    putExtra("sleepQuality", sleepQualityState ?: "Indefinido")
-                                    putExtra("caloriesBurned", caloriesBurnedState ?: 0.0)
-                                    putExtra(
-                                        "exercisesData",
-                                        ArrayList(exerciseDataState ?: emptyList())
-                                    )
+                                val mensagemParaDeepSeek = buildString {
+                                    append("\nCom base nesses dados, poderia fornecer **análises e recomendações**?\n")
+                                    append("\nDê dicas relacionadas a melhoria do bem-estar e qualidade de vida\n")
+                                    append("\nNão faça diagnósticos médicos, se ver algo preocupante, fale apenas para a pessoa procurar um medico\n")
+                                    append("\nPode ser algo resumido, não precisa ser muito detalhado\n")
+                                    //append("🔹 O usuário precisa melhorar algum aspecto da saúde?\n")
+                                    //append("🔹 Há riscos ou padrões preocupantes?\n")
+                                    //append("🔹 Quais hábitos podem ser ajustados?\n")
+                                    append("🔹 Por favor, ignore aqueles em que o valor for 0 ou inexistente. Mas não precisa falar pro usuário que ignorou, só ignore e pronto." +
+                                            " Se não tiver dados sobre sono por exemplo, considere que o usuário possa apenas não ter ligado o monitoramento " +
+                                            "de sono ou não ter usado o smartwatch na hora de dormir. Não dê recomendações baseadas nesses dados inexistentes. " +
+                                            "No máximo fale que a análise seria melhor se houvesse mais dados.\n")
+                                    append("🔹 Coloque espaços entre parágrafos ou itens, e use emojis para melhorar a visualização." +
+                                            "Evite fazer parágrafos longos\n")
+                                    append("🔹 Coloque no início do texto a data dos dados no formato PT-BR. Exemplo: Aqui está uma análise baseada nos dados do dia 13/05/2025\n")
+
+                                    append("\nAgradeço pelas sugestões! 😃")
                                 }
-                                context.startActivity(intent)
+
+                                val encodedPrompt = URLEncoder.encode(mensagemParaDeepSeek, StandardCharsets.UTF_8.name())
+                                // 2. Navegamos para a nova rota
+                                navController.navigate("ai_report_route/${encodedPrompt}")
                             } else {
                                 // Para os outros itens, apenas muda a aba selecionada
                                 selectedItemIndex = index
@@ -358,13 +366,13 @@ fun DashboardScreen(
                             Text(
                                 selectedDate.format(dateFormatter),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onPrimary
+                                color = MaterialTheme.colorScheme.onSecondary
 
                             )
                             Icon(
                                 Icons.Default.ArrowDropDown,
                                 contentDescription = "Selecionar Data",
-                                tint = MaterialTheme.colorScheme.onPrimary
+                                tint = MaterialTheme.colorScheme.onSecondary
 
                             )
                         }
@@ -590,7 +598,7 @@ fun DashboardScreen(
                     date = selectedDate, // Passando a data selecionada
                     modifier = Modifier.weight(1f),
                     onClick = { // <<< Ação de clique definida aqui
-                        navController.navigate(AppDestinations.STEPS_WEEKLY_ANALYSIS_ROUTE)// Ocupa metade do espaço disponível
+                        navController.navigate(AppDestinations.HEART_RATE_WEEKLY_ANALYSIS_ROUTE)// Ocupa metade do espaço disponível
                     }
                 )
                 OxygenSaturationSummaryCard(
@@ -628,7 +636,7 @@ fun DashboardScreen(
                 sleepQuality = sleepQuality,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { // <<< Ação de clique definida aqui
-                    navController.navigate(AppDestinations.STEPS_WEEKLY_ANALYSIS_ROUTE)// Ocupa metade do espaço disponível
+                   // navController.navigate(AppDestinations.STEPS_WEEKLY_ANALYSIS_ROUTE)// Ocupa metade do espaço disponível
                 }
             )
 
@@ -639,7 +647,7 @@ fun DashboardScreen(
                 exerciseSummary = exerciseSummaryForContent,
                 modifier = Modifier.fillMaxWidth(),
                 onClick = { // <<< Ação de clique definida aqui
-                    navController.navigate(AppDestinations.STEPS_WEEKLY_ANALYSIS_ROUTE)// Ocupa metade do espaço disponível
+                    //navController.navigate(AppDestinations.STEPS_WEEKLY_ANALYSIS_ROUTE)// Ocupa metade do espaço disponível
                 }
             )
         }

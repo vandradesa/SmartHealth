@@ -23,6 +23,7 @@ import com.example.bemestarinteligenteapp.view.steps.StepsWeeklyChartView
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -30,7 +31,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import com.example.bemestarinteligenteapp.view.heartrate.HeartRateWeeklyChartView
+import kotlinx.coroutines.launch
 
 
 // import com.example.bemestarinteligenteapp.view.steps.StepsWeeklyChartView
@@ -40,6 +44,7 @@ import androidx.compose.ui.Alignment
 @Composable
 fun AnaliseCompletaScreen(modifier: Modifier = Modifier) {
     val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
     // A Column rolável é a chave para empilhar todos os gráficos
     Box(modifier = modifier.fillMaxSize()) {
     Column(
@@ -75,8 +80,10 @@ fun AnaliseCompletaScreen(modifier: Modifier = Modifier) {
 
          Divider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp))
 
-        // 4. Gráfico de Frequência Cardíaca (Exemplo)
-        // HeartRateWeeklyChartView() // TODO: Descomente quando tiver este Composable
+         //4. Gráfico de Frequência Cardíaca (Exemplo)
+         HeartRateWeeklyChartView()
+
+        Divider(modifier = Modifier.padding(horizontal = 16.dp, vertical = 24.dp))
 
         // 5. Gráfico de Saturação de O2
         OxygenSaturationWeeklyChartView()
@@ -87,26 +94,36 @@ fun AnaliseCompletaScreen(modifier: Modifier = Modifier) {
     }
 
         val showScrollIndicator by remember {
-            derivedStateOf { scrollState.value == 0 && scrollState.maxValue > 0 }
+            derivedStateOf { scrollState.value < 10 && scrollState.maxValue > 0 }
         }
 
         AnimatedVisibility(
             visible = showScrollIndicator,
             modifier = Modifier
-                .align(Alignment.BottomCenter) // Alinha na parte inferior e central
+                .align(Alignment.BottomCenter)
                 .padding(bottom = 32.dp),
-            exit = fadeOut() // Animação de desaparecimento
+            exit = fadeOut()
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.clickable {
+                    // Dentro do clique, iniciamos uma corrotina para animar a rolagem
+                    scope.launch {
+                        // Rola a tela suavemente para baixo em 800 pixels
+                        scrollState.animateScrollTo(800)
+                    }
+                }
+            ) {
                 Text(
                     "Role para ver mais",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                 )
                 Icon(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     contentDescription = "Rolar para baixo",
-                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.8f)
                 )
             }
         }

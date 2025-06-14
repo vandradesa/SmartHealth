@@ -65,7 +65,7 @@ fun HeartRateWeeklyChartView(
     ) {
         Text(
             // text = AppChartConstants.TITLE_CHART_HEART_RATE, // Se usar constantes
-            text = "Evolução Semanal da Frequência Cardíaca",
+            text = "Frequência Cardíaca",
             style = MaterialTheme.typography.titleLarge,
             modifier = Modifier
                 .padding(bottom = 16.dp)
