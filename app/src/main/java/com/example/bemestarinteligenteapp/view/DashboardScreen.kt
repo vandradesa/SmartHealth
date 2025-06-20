@@ -295,25 +295,56 @@ fun DashboardScreen(
                     NavigationBarItem(
                         selected = selectedItemIndex == index,
                         onClick = {
-                            // A LÓGICA DA IA É TRATADA DE FORMA ESPECIAL
-                            if (item.title == "Relatório IA") {
-                                val mensagemParaDeepSeek = buildString {
-                                    append("\nCom base nesses dados, poderia fornecer **análises e recomendações**?\n")
-                                    append("\nDê dicas relacionadas a melhoria do bem-estar e qualidade de vida\n")
-                                    append("\nNão faça diagnósticos médicos, se ver algo preocupante, fale apenas para a pessoa procurar um medico\n")
-                                    append("\nPode ser algo resumido, não precisa ser muito detalhado\n")
-                                    //append("🔹 O usuário precisa melhorar algum aspecto da saúde?\n")
-                                    //append("🔹 Há riscos ou padrões preocupantes?\n")
-                                    //append("🔹 Quais hábitos podem ser ajustados?\n")
-                                    append("🔹 Por favor, ignore aqueles em que o valor for 0 ou inexistente. Mas não precisa falar pro usuário que ignorou, só ignore e pronto." +
-                                            " Se não tiver dados sobre sono por exemplo, considere que o usuário possa apenas não ter ligado o monitoramento " +
-                                            "de sono ou não ter usado o smartwatch na hora de dormir. Não dê recomendações baseadas nesses dados inexistentes. " +
-                                            "No máximo fale que a análise seria melhor se houvesse mais dados.\n")
-                                    append("🔹 Coloque espaços entre parágrafos ou itens, e use emojis para melhorar a visualização." +
-                                            "Evite fazer parágrafos longos\n")
-                                    append("🔹 Coloque no início do texto a data dos dados no formato PT-BR. Exemplo: Aqui está uma análise baseada nos dados do dia 13/05/2025\n")
 
-                                    append("\nAgradeço pelas sugestões! 😃")
+                            if (item.title == "Relatório IA") {
+
+                                val steps = stepsDataState?.count
+                                val avgBpm = averageBpmState
+                                val oxygen = oxygenSaturationState
+                                val sleepDuration = sleepDurationState
+                                val sleepQuality = sleepQualityState
+                                val calories = caloriesBurnedState
+                                val exercises = exerciseDataState
+                                val date = selectedDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT))
+
+
+                                val mensagemParaDeepSeek = buildString {
+                                    append("Por favor, analise os seguintes dados de saúde do dia $date:\n\n")
+
+                                    if (steps != null && steps > 0) {
+                                        append("👣 Passos Totais: $steps passos\n")
+                                    }
+                                    if (avgBpm != null && avgBpm > 0) {
+                                        append("❤️ Frequência Cardíaca Média: ${"%.1f".format(avgBpm)} bpm\n")
+                                    }
+                                    if (oxygen != null && oxygen > 0) {
+                                        append("🩸 Saturação de Oxigênio: ${"%.1f".format(oxygen)}%\n")
+                                    }
+                                    if (calories != null && calories > 0) {
+                                        append("🔥 Calorias Queimadas: ${"%.0f".format(calories)} kcal\n")
+                                    }
+                                    if (sleepDuration != null && sleepDuration > 0) {
+                                        val horas = sleepDuration / 3600000
+                                        val minutos = (sleepDuration % 3600000) / 60000
+                                        append("😴 Sono: ${horas}h e ${minutos}min. Qualidade percebida: $sleepQuality\n")
+                                    }
+                                    if (!exercises.isNullOrEmpty()) {
+                                        append("🏋️ Exercícios:\n")
+                                        exercises.forEach { exercise ->
+                                            val duracaoMinutos = java.time.Duration.between(exercise.startTime, exercise.endTime).toMinutes()
+                                            append("- ${exercise.exerciseType}: $duracaoMinutos minutos\n")
+                                        }
+                                    }
+
+                                    append("\n--- Instruções para a IA ---\n")
+
+                                    append("Com base nesses dados, poderia fornecer **análises e recomendações**?\n")
+                                    append("Dê dicas relacionadas a melhoria do bem-estar e qualidade de vida.\n")
+                                    append("Não faça diagnósticos médicos, se ver algo preocupante, fale apenas para a pessoa procurar um medico.\n")
+                                    append("Pode ser algo resumido, não precisa ser muito detalhado.\n")
+                                    append("Por favor, ignore os dados que não foram fornecidos (nulos ou zero).\n")
+                                    append("Use emojis para melhorar a visualização e separe os tópicos em parágrafos curtos.\n")
+                                    append("Agradeço pelas sugestões! 😃")
                                 }
 
                                 val encodedPrompt = URLEncoder.encode(mensagemParaDeepSeek, StandardCharsets.UTF_8.name())

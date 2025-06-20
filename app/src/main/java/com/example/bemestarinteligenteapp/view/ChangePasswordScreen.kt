@@ -93,14 +93,7 @@ fun ChangePasswordScreen(
                         verticalArrangement = Arrangement.Center
                     ) {
 
-                        Image(
-                            painter = painterResource(id = R.drawable.logo_smarthealth),
-                            contentDescription = "Logo",
-                            modifier = Modifier.size(40.dp) // Ajuste o tamanho da logo
-                        )
 
-                        // 2. Um espaço entre a logo e o texto
-                        Spacer(modifier = Modifier.width(8.dp))
 
                         // 3. O Texto
                         Text("Alterar Senha")
